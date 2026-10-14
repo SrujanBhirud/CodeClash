@@ -228,7 +228,7 @@ export function CodePanel({ draftKey, submit, run, blocked, label, onJudged, onL
       <Editor language={language} value={code} onChange={setCode} onSubmit={send} height="clamp(260px, calc(100vh - 430px), 600px)" />
       <div className="code-foot" ref={footRef}>
         <div className="row between">
-          <span className="muted small">{blocked ?? <>submit with <kbd>Ctrl</kbd> + <kbd>Enter</kbd></>}</span>
+          <span className="muted small">{blocked ?? <>submit with <kbd>Ctrl</kbd> + <kbd>Enter</kbd>. Python 3 and JavaScript only; C, C++17, Java and Go are a later step.</>}</span>
           <span className="row">
             {run ? <button className="btn sm" type="button" onClick={trySamples} disabled={!!blocked || busy || judging}>run samples</button> : null}
             <button className="btn primary" type="button" onClick={send} disabled={!!blocked || busy || judging}>

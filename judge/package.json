@@ -8,6 +8,10 @@
     "./runner": {
       "types": "./dist/runner.d.ts",
       "import": "./dist/runner.js"
+    },
+    "./decide": {
+      "types": "./dist/decide.d.ts",
+      "import": "./dist/decide.js"
     }
   },
   "scripts": {

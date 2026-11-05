@@ -302,11 +302,13 @@ const past = rounds.map((round, index) => ({
 }));
 past.push({ title: 'Library cup', startsAt: hourOf(now - 14 * DAY), players: sample(people, 40), problems: libraryPool, minutes: 240 });
 
+const adminPerson: Person = { _id: admin._id, name: 'Admin', skill: 1550 };
 let contestSubmissions = 0;
-for (const item of past) {
+for (const [index, item] of past.entries()) {
+  const players = index < 5 ? [...item.players, adminPerson] : item.players;
   const created = await createContest({ title: item.title, status: 'published', startsAt: item.startsAt, minutes: item.minutes, problems: item.problems });
-  await seat(created._id, item.players, 'competing', created.startsAt.getTime());
-  contestSubmissions += await playContest(created, item.players, item.problems, item.minutes);
+  await seat(created._id, players, 'competing', created.startsAt.getTime());
+  contestSubmissions += await playContest(created, players, item.problems, item.minutes);
   await applyRatings(db, String(created._id));
 }
 
@@ -327,6 +329,32 @@ for (const player of sample(warmupPlayers, 8)) {
   });
   live.push({ id: insertedId });
 }
+const planted = warmupPool[0];
+const [copierA, copierB] = warmupPlayers;
+if (planted && copierA && copierB) {
+  const copied = [
+    'def solve():',
+    '    count = int(input())',
+    '    values = list(map(int, input().split()))',
+    '    best = values[0]',
+    '    running = 0',
+    '    index = 0',
+    '    while index < count:',
+    '        current = values[index]',
+    '        running = current if running + current < current else running + current',
+    '        if running > best:',
+    '            best = running',
+    '        index = index + 1',
+    '    print(best)',
+    'solve()',
+  ].join('\n');
+  const when = new Date();
+  await db.collection('submissions').insertMany([copierA, copierB].map((player) => ({
+    userId: player._id, contestId: warmup._id, problemVersionId: planted.versionId, problemId: planted.problemId,
+    language: 'python', code: copied, kind: 'contest', status: 'scored', idempotencyKey: null, claimToken: null,
+    verdict: 'AC', reason: null, submittedAt: when, judgedAt: when, seeded: true, ipHash: null,
+  })));
+}
 try {
   const redis = new Redis(process.env.REDIS_URL ?? 'redis://127.0.0.1:6379', { lazyConnect: true, maxRetriesPerRequest: 1 });
   await redis.connect();
@@ -340,6 +368,14 @@ const autumnStart = hourOf(now + 5 * DAY);
 const autumnOpen = await createContest({ title: 'Autumn Open', status: 'registration_open', startsAt: autumnStart, minutes: 150, problems: toSeeded(autumn) });
 await db.collection('contests').updateOne({ _id: autumnOpen._id }, { $set: { registrationOpensAt: new Date(now - 2 * DAY) } });
 await seat(autumnOpen._id, sample(people, 40), 'reserved', now);
+await createContest({
+  title: 'Last seat',
+  status: 'registration_open',
+  startsAt: hourOf(now + 2 * DAY),
+  minutes: 90,
+  problems: warmupPool.slice(0, 1),
+  capacity: 1,
+});
 await createContest({ title: 'Winter Invitational', status: 'draft', startsAt: hourOf(now + 27 * DAY), minutes: 180, problems: toSeeded(winter) });
 
 // ---------- practice history: streaks and the activity heatmap ----------
@@ -367,6 +403,26 @@ for (const person of people) {
     }
   }
 }
+const adminPool = practice.filter((p) => p.rating <= 1700);
+const adminProblems = adminPool.length ? adminPool : practice;
+for (let day = 0; day < 90; day += 1) {
+  if (day % 2 === 1 && day > 2) continue;
+  const start = today - day * DAY;
+  const span = day === 0 ? Math.max(MINUTE, now - start - MINUTE) : DAY;
+  const at = start + Math.floor(rng.next() * span);
+  const problem = pick(adminProblems);
+  const add = (code: { language: SourceLanguage; code: string }, verdict: string, offset: number) => submissions.push({
+    userId: admin._id, contestId: null, problemVersionId: problem.versionId, problemId: problem.problemId,
+    language: code.language, code: code.code, kind: 'practice', status: 'judged', idempotencyKey: null, claimToken: null,
+    verdict, reason: null, submittedAt: new Date(at + offset), judgedAt: new Date(at + offset + 2000), seeded: true,
+  });
+  if (problem.wrong.length && rng.next() < 0.3) {
+    const wrong = pick(problem.wrong);
+    add(wrong, wrong.verdict === 'AC' ? 'WA' : wrong.verdict, -8 * MINUTE);
+  }
+  if (rng.next() < 0.12) add(problem.reference, 'TLE', -3 * MINUTE);
+  add(problem.reference, 'AC', 0);
+}
 for (let i = 0; i < submissions.length; i += 1000) await db.collection('submissions').insertMany(submissions.slice(i, i + 1000));
 
 // ---------- quiz bank ----------
@@ -381,7 +437,7 @@ for (const question of [...QUIZ_BANK, ...MORE_QUIZ]) {
 const visible = practice.length + libraryPool.length + rounds.reduce((n, r) => n + r.length, 0);
 console.log(`problems: ${CATALOG.length + MORE.length} catalog + ${imported.length} from CodeContests (${visible} in the archive)`);
 console.log(`users: ${people.length} participants, ${STAFF.length} staff, admin ${admin.email}`);
-console.log(`contests: ${past.length} published, Warmup round live, Autumn Open registering, Winter Invitational draft`);
+console.log(`contests: ${past.length} published, Warmup round live, Autumn Open registering, Last seat open, Winter Invitational draft`);
 console.log(`submissions: ${contestSubmissions} in contests, ${submissions.length} practice, ${live.length} sent to the judge`);
 console.log(`quiz bank: ${QUIZ_BANK.length + MORE_QUIZ.length} questions`);
 console.log(`every demo account uses the password "${DEMO_PASSWORD}"`);

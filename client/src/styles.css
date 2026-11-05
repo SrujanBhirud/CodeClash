@@ -359,6 +359,10 @@ tr.solved .letter { background: var(--ok); color: var(--bg); }
 
 /* ---------- empty states ---------- */
 .empty { text-align: center; color: var(--muted); padding: 2.5rem 1rem; }
+.modal-back { position: fixed; inset: 0; z-index: 80; background: color-mix(in srgb, #000 45%, transparent); display: grid; place-items: center; padding: 1rem; }
+.modal { width: min(28rem, 100%); background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.2rem; box-shadow: 0 16px 40px color-mix(in srgb, #000 28%, transparent); }
+.modal h2 { font-size: 1.05rem; margin: 0 0 0.4rem; }
+.modal p { margin: 0 0 1rem; color: var(--muted); }
 .empty svg { color: color-mix(in srgb, var(--muted) 70%, transparent); margin-bottom: 0.5rem; }
 .empty strong { display: block; color: var(--fg); margin-bottom: 0.25rem; }
 .skeleton { background: linear-gradient(90deg, var(--surface), var(--raised), var(--surface)); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: var(--radius-sm); height: 1rem; }
@@ -426,7 +430,13 @@ tr.solved .letter { background: var(--ok); color: var(--bg); }
 .demo { margin-top: 1.25rem; padding: 0.7rem 0.9rem; border: 1px dashed var(--line); border-radius: var(--radius-sm); font-size: 0.78rem; color: var(--muted); }
 
 /* ---------- authoring ---------- */
-.author { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+.author { display: grid; gap: var(--space-4); }
+.author-switch { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+.author-switch .input-icon { width: min(16rem, 100%); }
+.author-switch select { width: min(24rem, 100%); }
+.steps-nav { display: flex; gap: 0.35rem; padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--line); }
+.step-tab { display: inline-flex; gap: 0.4rem; align-items: center; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 0.25rem 0.7rem; }
+.step-tab.on { color: var(--fg); border-color: var(--accent); background: var(--accent-soft); }
 .author-side { position: sticky; top: calc(var(--header-h) + 1rem); display: flex; flex-direction: column; max-height: calc(100vh - var(--header-h) - 2rem); }
 .side-find { padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--line); }
 .plist { list-style: none; margin: 0; padding: 0.25rem 0; overflow: auto; flex: 1; }
@@ -500,6 +510,8 @@ form.author-work { margin: 0; }
 
 /* ---------- control & admin ---------- */
 .pick-list { max-height: 18rem; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.order-list { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.3rem; }
+.order-list li { display: flex; gap: 0.45rem; align-items: center; padding: 0.3rem 0.4rem; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
 .pick-list label { display: flex; gap: 0.6rem; align-items: center; margin: 0; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--line); color: var(--fg); font-size: 0.85rem; cursor: pointer; }
 .pick-list label:last-child { border-bottom: 0; }
 .pick-list label:hover { background: var(--surface); }

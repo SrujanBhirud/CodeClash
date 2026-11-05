@@ -151,10 +151,23 @@ function compileArgs(language: SourceLanguage, workDir: string, name: string): s
   ];
 }
 
+/**
+ * The compile container drops every capability, including the one that lets root ignore
+ * directory permissions. A private temp directory has to be writable by that process, and
+ * the binary has to be executable by the unprivileged run user.
+ */
+async function openWorkDir(dir: string) {
+  await chmod(dir, 0o777);
+  const { readdir } = await import('node:fs/promises');
+  for (const name of await readdir(dir)) {
+    await chmod(path.join(dir, name), 0o755).catch(() => {});
+  }
+}
+
 /** Writes the source and compiles it when the language needs that. Returns a CE reason, or null. */
 async function prepare(language: SourceLanguage, code: string, dir: string) {
   const lang = spec(language);
-  await chmod(dir, 0o755);
+  await openWorkDir(dir);
   await writeFile(path.join(dir, lang.source), code, { encoding: 'utf8', mode: 0o644 });
   if (!lang.compile) return null;
   const name = containerName();
@@ -163,6 +176,7 @@ async function prepare(language: SourceLanguage, code: string, dir: string) {
     const detail = (compiled.stderr || compiled.stdout || 'compilation failed').slice(0, 500);
     return { reason: compiled.timedOut ? 'compilation timed out' : detail, stderr: compiled.stderr };
   }
+  await openWorkDir(dir);
   return null;
 }
 

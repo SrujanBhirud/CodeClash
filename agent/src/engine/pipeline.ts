@@ -4,6 +4,7 @@ import {
   validateInput, type BoundaryClass, type InputSpec, type SourceLanguage,
 } from '@codeclash/shared';
 import { generateMutants } from './mutate.js';
+import { shapeInputs } from './shape.js';
 
 export interface CaseRun { exitCode: number | null; timedOut: boolean; ms: number; stdout: string; stderr: string }
 export interface BatchRun { compileError: string | null; cases: CaseRun[] }
@@ -87,7 +88,7 @@ export interface HardeningMetrics {
     slowSolutionsCaught: string[];
   };
   spec: 'given' | 'drafted' | 'none';
-  attacks: { boundary: number; random: number; max: number; model: number };
+  attacks: { boundary: number; random: number; max: number; shape: number; model: number };
 }
 
 export interface HardeningInput {
@@ -213,15 +214,18 @@ export async function runHardening(job: HardeningInput): Promise<HardeningResult
         return false;
       }
       validator = 'valid under the input spec';
-    } else if (source === 'model') {
-      notes.push('Dropped a model input: without an input spec it cannot be validated.');
-      return false;
+    } else if (source === 'model' || kind === 'shape') {
+      if (input.length > 20_000) {
+        notes.push(`Dropped a ${kind} input: it is too long to try without a spec.`);
+        return false;
+      }
+      validator = 'no spec; kept only if the reference answers it';
     }
     existing.add(normalizeInput(input));
     attacks.push({ input, kind, source, validator });
     return true;
   };
-  const counts = { boundary: 0, random: 0, max: 0, model: 0 };
+  const counts = { boundary: 0, random: 0, max: 0, shape: 0, model: 0 };
   let maxInput: string | null = null;
   if (job.spec) {
     for (const { kind, input } of boundaryInputs(job.spec.parsed, rng)) if (addAttack(input, `boundary:${kind}`, 'deterministic')) counts.boundary += 1;
@@ -232,7 +236,10 @@ export async function runHardening(job: HardeningInput): Promise<HardeningResult
     maxInput = maxScaleInput(job.spec.parsed, rng);
     if (maxInput && addAttack(maxInput, 'max-scale', 'deterministic')) counts.max += 1;
   } else {
-    notes.push('No input spec: boundary, random, and max-size attacks were skipped. Add a spec in the Spec section.');
+    for (const input of shapeInputs(tests.filter((_, i) => ranCleanly(baseline.cases[i])).map((t) => t.input))) {
+      if (addAttack(input, 'shape', 'deterministic')) counts.shape += 1;
+    }
+    notes.push(`No input spec: boundary, random, and max-size attacks were skipped. ${counts.shape} inputs were derived from the current tests, and model inputs are kept when the reference answers them.`);
   }
 
   const context = (): PlanContext => ({

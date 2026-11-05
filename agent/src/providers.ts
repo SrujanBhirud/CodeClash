@@ -17,7 +17,7 @@ export class ProviderError extends Error {
 
 export interface CallOptions { timeoutMs?: number; retryDelayMs?: number }
 
-const TIMEOUT_MS = 20_000;
+const TIMEOUT_MS = 60_000;
 
 /** One POST with a timeout and a single retry on 429 or 5xx. */
 export async function postJson(url: string, init: { headers: Record<string, string>; body: unknown }, options: CallOptions = {}) {
@@ -74,7 +74,10 @@ export function geminiProvider(apiKey: string, model: string, options: CallOptio
     async complete(prompt) {
       const body = await postJson(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
         headers: { 'x-goog-api-key': apiKey },
-        body: { contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json' } },
+        body: {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 4096, thinkingConfig: { thinkingBudget: 0 } },
+        },
       }, options) as { candidates?: { content?: { parts?: { text?: string }[] } }[]; usageMetadata?: { totalTokenCount?: number } };
       return {
         text: body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('\n') ?? '',
@@ -114,6 +117,47 @@ export class FakeProvider implements Provider {
 
 export interface ProviderConfig { provider: Provider | null; status: AIStatus; reason: string | null }
 
+/** GEMINI_API_KEY, GEMINI_API_KEY_2 … _8, and comma-separated GEMINI_API_KEYS. Duplicates are dropped. */
+export function geminiKeysFromEnv(env: NodeJS.ProcessEnv = process.env): string[] {
+  const listed = (env.GEMINI_API_KEYS ?? '').split(/[\s,]+/).map((key) => key.trim()).filter(Boolean);
+  const numbered = [2, 3, 4, 5, 6, 7, 8].flatMap((index) => {
+    const key = env[`GEMINI_API_KEY_${index}`];
+    return key?.trim() ? [key.trim()] : [];
+  });
+  const first = (env.GEMINI_API_KEY ?? '').trim();
+  return [...new Set([first, ...numbered, ...listed].filter(Boolean))];
+}
+
+/** Tries each Gemini key in turn. A rate limit or a rejected key moves the next call on. */
+export function geminiKeyPool(keys: string[], model: string, options: CallOptions = {}): Provider {
+  const perKey = keys.map((key) => geminiProvider(key, model, options));
+  const cooledUntil = keys.map(() => 0);
+  const dead = keys.map(() => false);
+  let cursor = 0;
+  return {
+    name: 'gemini',
+    model,
+    async complete(prompt) {
+      let last: ProviderError = new ProviderError('RATE_LIMITED', 'Every Gemini key is rate limited or rejected');
+      for (let step = 0; step < keys.length; step += 1) {
+        const index = (cursor + step) % keys.length;
+        if (dead[index] || cooledUntil[index] > Date.now()) continue;
+        try {
+          const result = await perKey[index]!.complete(prompt);
+          cursor = index;
+          return result;
+        } catch (error) {
+          last = error instanceof ProviderError ? error : new ProviderError('ERROR', 'The model call failed');
+          if (last.status === 'RATE_LIMITED') cooledUntil[index] = Date.now() + 45_000;
+          else if (last.message.includes('rejected the API key')) dead[index] = true;
+          else cooledUntil[index] = Date.now() + 5_000;
+        }
+      }
+      throw last;
+    },
+  };
+}
+
 /**
  * `AGENT_PROVIDER` is anthropic, gemini, or openai, and `AGENT_MODEL` names the model; nothing
  * is assumed. Missing pieces leave the agent in deterministic mode.
@@ -130,8 +174,9 @@ export function providerFromEnv(env: NodeJS.ProcessEnv = process.env, options: C
       : { provider: null, status: 'DISABLED', reason: 'ANTHROPIC_API_KEY is not set.' };
   }
   if (choice === 'gemini') {
-    return env.GEMINI_API_KEY
-      ? { provider: geminiProvider(env.GEMINI_API_KEY, model, options), status: 'AVAILABLE', reason: null }
+    const keys = geminiKeysFromEnv(env);
+    return keys.length
+      ? { provider: geminiKeyPool(keys, model, options), status: 'AVAILABLE', reason: null }
       : { provider: null, status: 'DISABLED', reason: 'GEMINI_API_KEY is not set.' };
   }
   if (choice === 'openai') {

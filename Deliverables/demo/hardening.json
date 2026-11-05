@@ -1,0 +1,58 @@
+{
+  "at": "2026-11-05T14:05:11.342Z",
+  "api": "http://127.0.0.1:4000",
+  "problem": "Larger of two",
+  "versionId": "6acf3be0cbb993049db4a889",
+  "runId": "6aec8cfa3eb8ea40a4bcac1d",
+  "status": "completed",
+  "stage": "done",
+  "aiStatus": "AVAILABLE",
+  "calls": 2,
+  "tokens": 1089,
+  "score": null,
+  "attacks": {
+    "boundary": 4,
+    "random": 25,
+    "max": 1,
+    "shape": 0,
+    "model": 1
+  },
+  "notes": [],
+  "mutations": [
+    {
+      "operator": "relational",
+      "source": "deterministic",
+      "status": "equivalent",
+      "description": "line 3: >= to >"
+    },
+    {
+      "operator": "model",
+      "source": "model",
+      "status": "killed",
+      "description": "Contestant assumes inputs are positive and uses absolute values."
+    },
+    {
+      "operator": "model",
+      "source": "model",
+      "status": "killed",
+      "description": "Contestant reads input as strings and uses lexicographical comparison."
+    }
+  ],
+  "proposals": [
+    {
+      "type": "wrong_solution",
+      "source": "model",
+      "attack": "model:wrong_solution",
+      "status": "held",
+      "reason": "A model wrong solution (Contestant assumes inputs are positive and uses absolute values.) that the current tests catch. Keeping it guards future edits."
+    },
+    {
+      "type": "wrong_solution",
+      "source": "model",
+      "attack": "model:wrong_solution",
+      "status": "held",
+      "reason": "A model wrong solution (Contestant reads input as strings and uses lexicographical comparison.) that the current tests catch. Keeping it guards future edits."
+    }
+  ],
+  "error": null
+}

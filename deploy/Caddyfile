@@ -1,0 +1,23 @@
+:80 {
+	handle /api/* {
+		reverse_proxy 127.0.0.1:4000
+	}
+	handle /socket.io/* {
+		reverse_proxy 127.0.0.1:4000
+	}
+	handle /health {
+		reverse_proxy 127.0.0.1:4000
+	}
+	handle /metrics {
+		reverse_proxy 127.0.0.1:4000
+	}
+	handle /mail/* {
+		uri strip_prefix /mail
+		reverse_proxy 127.0.0.1:8025
+	}
+	handle {
+		root * /opt/codeclash/client/dist
+		try_files {path} /index.html
+		file_server
+	}
+}

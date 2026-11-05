@@ -1,0 +1,307 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{newpxtext,newpxmath}
+\usepackage[scaled=0.92]{inconsolata}
+\usepackage[a4paper,margin=2.4cm,headheight=14pt]{geometry}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage{hyperref}
+
+\setstretch{1.05}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.4em}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small CS455 CodeClash}
+\fancyhead[R]{\small Deliverable 3}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyfoot[C]{\small\thepage}
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \renewcommand{\headrulewidth}{0pt}%
+  \fancyfoot[C]{\small\thepage}%
+}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=black,
+  citecolor=black,
+  pdftitle={CodeClash Deliverable 3},
+  pdfauthor={CS455 CodeClash team}
+}
+
+\titleformat{\section}{\large\bfseries}{\thesection}{0.75em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.65em}{}
+\titlespacing*{\section}{0pt}{1.05em}{0.4em}
+\titlespacing*{\subsection}{0pt}{0.95em}{0.2em}
+
+\captionsetup{font=small,labelfont=bf,skip=0.35em}
+\setlist[enumerate]{leftmargin=1.35em,itemsep=0.12em,topsep=0.15em}
+\setlist[itemize]{leftmargin=1.25em,itemsep=0.08em,topsep=0.15em}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\begin{document}
+
+\begin{center}
+{\large CS455}\\[0.3em]
+{\LARGE\bfseries Deliverable 3}\\[0.4em]
+CodeClash\\[0.65em]
+{\small
+Ridham Divyakant Solanki (230853) \quad
+Peeyush Agarwal (230749)\\[0.15em]
+Srujan Sachin Bhirud (231039) \quad
+Aritra Kolay (230192)\\[0.15em]
+Om Chandrakant Chaudhari (230715)\\[0.45em]
+}
+\url{https://github.com/SrujanBhirud/CodeClash}\\[0.1em]
+5 November 2026
+\end{center}
+
+The team repository is the one above. This pack is branch \path{feature/CC-58-demo-pack}. Published \texttt{main} is not rewritten. Pull requests \#40--\#46 stay as they were merged, with no Jira key and no review. CC-52 is not merged. Measurements below are from 5~November 2026 on the local compose stack \texttt{codeclash-srujan}, Docker Desktop 29.8.1, and Node 22, unless a row says otherwise.
+
+\section{Test report}
+
+\subsection{Unit, integration, system, adversarial}
+
+Unit tests cover scoring, the seat filter, the claim token, similarity, and the agent policy. Integration tests drive the HTTP API: authoring through the publish check, registration and waitlist promotion, freeze, rejudge, quiz, email verification before a seat, ratings, and enqueueing a hardening run. The system check is Playwright, \path{e2e/core.spec.ts}, three tests, run as the \texttt{e2e} job. The adversarial check is the escape suite in \path{judge/src/isolation.test.ts}: a fork bomb ends as RE or TLE, a host file is not read, a time limit and a memory limit are enforced, and a stdout flood is cut off.
+
+\texttt{npm run lint}, \texttt{npm run typecheck}, \texttt{npm test}, and \texttt{npm run test:coverage} passed on the tree that includes the sandbox fix. Counts from that coverage run:
+
+\begin{table}[ht]
+\centering
+\caption{Tests by workspace.}
+\label{tab:tests}
+{\small
+\begin{tabular}{@{}l r l@{}}
+\toprule
+Workspace & Tests & Result \\
+\midrule
+packages/shared & 33 & pass \\
+agent & 37 & pass \\
+server & 81 & pass \\
+judge & 22 & pass \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+The judge run includes the language suite (Python, JavaScript, C, C++17, Java~21, and Go all AC) and the batch suite (AC, AC, WA rather than three compile errors). On this branch, \path{server/src/http/auth.test.ts}, \path{flows.test.ts}, and \path{domain.test.ts} were run again after the six-digit code: 49 tests, pass. A local signup with Mailpit returned \texttt{mailed: true}, and the code in the inbox verified with HTTP 200.
+
+\subsection{Coverage}
+
+The gate is 80\% lines, functions, and statements in each workspace. Branches are reported and are not part of the gate.
+
+\begin{table}[ht]
+\centering
+\caption{Coverage on 5 November 2026, after CC-53.}
+\label{tab:cov}
+{\small
+\begin{tabular}{@{}l r r r r@{}}
+\toprule
+Workspace & Lines & Functions & Statements & Branches \\
+\midrule
+shared & 94.99 & 95.65 & 94.99 & 85.58 \\
+agent & 96.24 & 98.50 & 96.24 & 85.42 \\
+server & 92.24 & 95.60 & 92.24 & 73.53 \\
+judge & 94.31 & 87.50 & 94.31 & 83.72 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\section{Concurrency}
+
+\path{server/src/domain/domain.test.ts} registers 400 distinct users into a contest of 200 seats. The coverage run recorded that case at about 87 seconds. The result is exactly 200 seats and no duplicate seat.
+
+The write is a filtered update: a seat is inserted only while \texttt{reserved < capacity}, and a unique partial index rejects a second active seat for the same user. Two requests cannot both observe spare capacity and both commit. The same file checks that a stale judge claim token does not apply a second verdict, and that a first solve is awarded once.
+
+The demo contest Last seat has capacity 1 and registration open. Two browsers register. One is seated and one is waitlisted. That is the same filter, shown with a room of one.
+
+\section{Security}
+
+\begin{table}[ht]
+\centering
+\caption{Five threats.}
+\label{tab:threats}
+{\small
+\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+Threat & What holds it \\
+\midrule
+Submitted code escapes the host &
+\texttt{docker run} with capabilities dropped, a read-only root, no network, a pid limit, and an unprivileged run user. \texttt{/work} is read-only for the run. \\
+A participant calls an admin route &
+The role check returns 403 and the denial is audited. The client also leaves the page. \\
+A used refresh token is replayed &
+The refresh chain is revoked. \\
+Registration oversells the room &
+The filtered seat update and the unique partial index. \\
+Copied solutions are treated as independent &
+Winnowing similarity at 0.7 when a contest ends, and from Control. A match is a review. Nothing is disqualified automatically. \\
+\bottomrule
+\end{tabularx}
+}
+\end{table}
+
+Three tests: the escape suite in \path{judge/src/isolation.test.ts}, the 403-and-audit case in \path{server/src/http/auth.test.ts}, and the refresh-replay case in the same file.
+
+\section{Performance}
+
+The before/after of the archive aggregation is the 3~October run in \path{tests/load/results/k6.md}. After the change, archive latency was p50 30.4~ms and p95 49.1~ms, at 99.9 requests/s, with 0\% failed. The leaderboard script held p95 23.5~ms at 236.6 requests/s. Before the aggregation the archive route ran one stats query per problem. After it, the archive is one aggregation.
+
+The 5~November rerun on this laptop, while Docker, the judge, and the agent were also running, is in the same file. Throughput stayed near the target (99.6/s on \texttt{api}, 138/s on \texttt{leaderboard}) and 0\% of requests failed. Latency thresholds on the \texttt{api} script were missed on this machine (archive p95 807~ms). The leaderboard script stayed inside its 1000~ms threshold (p95 248~ms). That rerun is not the aggregation comparison.
+
+\section{Failure and recovery}
+
+\path{node tests/failure/run.mjs redis mongo} and \path{node tests/failure/run.mjs judge} against the running stack, compose project \texttt{codeclash-srujan}. \path{JUDGE_RESTART=touch} so \texttt{tsx watch} brought the judge back.
+
+\begin{quote}\small
+PASS \quad redis: \texttt{/health} recovers\\
+PASS \quad redis: the in-flight submission is judged once, judged AC\\
+PASS \quad mongo: \texttt{/health} recovers\\
+PASS \quad mongo: seat counts match active seats\\
+PASS \quad mongo: new submissions are judged after the restart\\
+PASS \quad judge: the claimed submission gets one verdict after restart, judged AC
+\end{quote}
+
+\section{Defects}
+
+\begin{table}[ht]
+\centering
+\caption{Five defects, each with a regression.}
+\label{tab:bugs}
+{\small
+\begin{tabularx}{\textwidth}{@{}l Y l@{}}
+\toprule
+Bug & Defect & Regression \\
+\midrule
+CC-53 &
+Compiled languages failed in CI. The compile container drops every capability, so a mode-755 temp directory rejected the binary and the verdict was CE. &
+languages, batch \\
+CC-54 &
+Concurrent registration could hand out more seats than capacity. &
+400 against 200 \\
+CC-55 &
+A stale judge claim could award the same solve twice. &
+claim token \\
+CC-56 &
+A used refresh token could be replayed into a new session. &
+auth replay \\
+CC-57 &
+A participant could call an admin route. &
+403 and audit \\
+\bottomrule
+\end{tabularx}
+}
+\end{table}
+
+CC-54, CC-55, CC-56, and CC-57 were already fixed on \texttt{main} and are marked Done. CC-53 is fixed in pull request \#47, merged 5~November 2026, with \texttt{check} and \texttt{e2e} green. CC-53 is the sandbox defect that made \texttt{check} red from pull request \#40 onward. CC-54 and CC-55 are the concurrency defects. CC-56 and CC-57 are the security defects. The escape suite sits beside them as the failure case for a hostile program.
+
+\section{Cost}
+
+The estimate before this pack was \$0 of paid infrastructure: local Docker, the Gemini free tier, and no judge fleet. The cloud estimate, if a host were required, was one \texttt{t3.micro} with 20~GB gp3 for the hours of the slot, then \texttt{aws ec2 stop-instances}. A NAT gateway, a load balancer, and RDS were excluded because they bill immediately.
+
+Actual cost is \$0. Gemini uses \texttt{gemini-3.6-flash} on the free tier. Keys are only in gitignored env. On 5~November, \texttt{aws freetier get-free-tier-usage} listed only AWS Glue. EC2 was not in the 12-month allowance, so a \texttt{t3.micro} would have billed. No instance was started. The hours of a VM are therefore zero. The commands for an account that still has the allowance are in \path{deploy/README.md}.
+
+\section{Timeline}
+
+Taken from \texttt{git log --first-parent} on \texttt{origin/main}. There is no fourth sprint. Deliverable~2 dissolved it. Dates are merge dates.
+
+\begin{table}[ht]
+\centering
+\caption{What landed, from the merge log.}
+\label{tab:time}
+{\small
+\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+When & What landed \\
+\midrule
+10--15 Oct &
+Local stack, modules, CI, sandbox, sign-in, submit, exactly-once judging, audit log (\#4--\#13). \\
+18--19 Oct &
+Roles, contests, state machine, seats, waitlist, withdraw (\#14--\#19). \\
+21--22 Oct &
+Contest submit, scoring, live board, authoring, tests, first solve (\#20--\#25). \\
+23--27 Oct &
+Demo problems, failure drills, escape suite, backups, quiz, publish check, practice slot (\#26--\#32). \\
+1--3 Nov &
+Rejudge, freeze, workers, audit search, profile (\#33--\#37). \\
+4 Nov &
+Ratings (\#38, last green \texttt{check} before the language work), metrics (\#39), then \#40--\#46 with \texttt{check} red. \\
+5 Nov &
+\#47, CC-53, the compile permission. Similarity, mail, and the operator guide are in that merge. \\
+\bottomrule
+\end{tabularx}
+}
+\end{table}
+
+\section{Deployment}
+
+Not a static host. The API holds Socket.IO connections, the judge is a Redis consumer that calls \texttt{docker run}, and Mongo is a replica set.
+
+The shape, when the account has the allowance, is one Ubuntu or Amazon Linux \texttt{t3.micro}, a public subnet, a public IP, 20~GB gp3, and 1~GB of swap on the root disk. The security group allows port 22 from the presenter's address and port 80, and nothing else. Mongo, Redis, and Mailpit stay on localhost. Caddy serves \path{client/dist} and proxies \texttt{/api}, \texttt{/socket.io}, \texttt{/health}, and \texttt{/metrics} to \texttt{127.0.0.1:4000}. Server, judge, and agent are systemd units. The judge uses that machine's Docker socket. \texttt{python:3.12-alpine} is pulled during setup so the live submit is not a cold pull. \path{CLIENT_ORIGIN} is \texttt{http://<public-ip>}. Gemini keys are in the unit environment, not in git. After setup, \path{scripts/demo-harden.mjs} is pointed at the public URL. The instance is stopped after the slot.
+
+That launch was not done. The signed-in account would have been billed. The ten-minute path runs on this PC, which has the same compose stack, the same seed, Mailpit, and the saved hardening files. \path{deploy/README.md} is the checklist for an eligible account, including the stop command.
+
+\section{Traceability}
+
+Requirement, the issue that names it, the pull request that merged it, and the test that locks it.
+
+\begin{table}[ht]
+\centering
+\caption{Requirements through to a test.}
+\label{tab:trace}
+{\small
+\begin{tabularx}{\textwidth}{@{}Y l l Y@{}}
+\toprule
+Requirement & Jira & PR & Test \\
+\midrule
+Rejudge & CC-32 & \#33 & flows \\
+Freeze and reveal & CC-33 & \#34 & flows \\
+Workers & CC-38 & \#35 & flows \\
+Audit search & CC-39 & \#36 & flows \\
+Profile edits & CC-43 & \#37 & auth \\
+Ratings & CC-45 & \#38 & flows \\
+\texttt{/metrics} & CC-48 & \#39 & metrics route \\
+C, C++, Java, Go & none & \#40 & languages \\
+Batch judge & none & \#41 & batch \\
+IOI subtasks & none & \#42 & scoring \\
+CodeContests import & none & \#43 & codecontests \\
+Hardening engine & CC-35 open & \#44 & pipeline, ai \\
+Hardening UI & none & \#45 & flows \\
+k6 and smoke & CC-40 open & \#46 & tests/load \\
+Compile permission & CC-53 & \#47 & languages, batch \\
+Similarity & CC-37 & \#47 & similarity \\
+Seats, 400 vs 200 & CC-54 & on main & domain \\
+Stale claim & CC-55 & on main & domain \\
+Refresh replay & CC-56 & on main & auth \\
+Participant to admin & CC-57 & on main & auth \\
+Demo mail and seed & CC-58 & this branch & auth, seed \\
+\bottomrule
+\end{tabularx}
+}
+\end{table}
+
+Pull requests \#40--\#46 were merged with no review, and \texttt{check} was red from \#40 because of CC-53. Those merges are not rewritten. \#47 makes \texttt{check} able to go green. The row to say out loud is CC-53, pull request \#47, \path{judge/src/languages.test.ts}.
+
+\section{Jira}
+
+Queried on 5~November 2026, \texttt{project = CC}. 58 issues. 39 Done. 1 In Progress (CC-28, per-user submission quota). 18 To Do, of which CC-5 through CC-15 are the eleven epics still in To Do, and CC-58 is the demo-pack task for this branch. CC-53 through CC-57 are Done.
+
+\section{Demo path}
+
+\path{Deliverables/demo-script.md} is the ten minutes: one submit to AC, the saved hardening run, Last seat with two browsers, a Redis restart with the PASS lines as backup, the admin page refused to a participant, and the CC-53 row. The hardening script writes status, attacks, notes, and proposals. It does not write a key. On Larger of two, with the provider set, the run completed with \texttt{aiStatus} AVAILABLE, two model calls, 1089 tokens, and attacks boundary 4, random 25, max 1, shape 0, model 1. Two model proposals were held: a contestant who takes absolute values, and one who compares the inputs as strings. With \path{AGENT_PROVIDER} unset, the same script finished with \texttt{aiStatus} DISABLED, zero tokens, model attacks 0, and the note ``No AGENT\_PROVIDER is set.'' That file is the one to repeat live.
+
+The AI engineering log for this deliverable is \path{Deliverables/AI-Engineering-Log.tex}.
+
+\end{document}

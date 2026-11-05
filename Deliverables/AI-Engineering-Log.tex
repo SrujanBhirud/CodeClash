@@ -58,7 +58,7 @@
 \begin{center}
 {\large CS455}\\[0.3em]
 {\LARGE\bfseries AI Engineering Log}\\[0.4em]
-CodeClash \quad Deliverable 2\\[0.65em]
+CodeClash \quad Deliverable 3\\[0.65em]
 {\small
 Ridham Divyakant Solanki (230853) \quad
 Peeyush Agarwal (230749)\\[0.15em]
@@ -67,14 +67,12 @@ Aritra Kolay (230192)\\[0.15em]
 Om Chandrakant Chaudhari (230715)\\[0.45em]
 }
 \url{https://github.com/SrujanBhirud/CodeClash}\\[0.1em]
-15 October 2026
+5 November 2026
 \end{center}
 
-These entries are the interactions in which a recommendation had to be decided. Other sessions did ordinary drafting, and those are not included. A prompt is the request as sent. A reply is summarised. A follow-up is included only where the later reply changed what was kept. Each entry then records the evaluation, the error, the change, the artifact, and the reason.
+These entries are the interactions in which a recommendation had to be decided for Deliverable~3. Other sessions did ordinary drafting, and those are not included. A prompt is the request as sent. A reply is summarised. Each entry then records the evaluation, the error, the change, the artifact, and the reason.
 
 \section{Sequence}
-
-The entries follow the order of the decisions. L1--L3 and L8 are planning. L4--L6 are on \texttt{main}. L7 is a branch and is not merged. L3 and L6 are the entries with a follow-up: L6 is the verdict rule that L3 left open. L5 and L7 stay inside the sprint cut from L2.
 
 \begin{table}[ht]
 \centering
@@ -85,22 +83,14 @@ The entries follow the order of the decisions. L1--L3 and L8 are planning. L4--L
 \toprule
 No. & Stage & Date & Decision \\
 \midrule
-L1 & Planning & 24 Sep &
-Agents removed from the four sprints. Sandbox escape kept in the threat model. \\
-L2 & Planning & 26 Sep &
-170-point plan rejected. Kept plan: 86 points, four sprints, authoring in Sprint~3. \\
-L3 & Planning & 26 Sep &
-NestJS rewrite, three unused patterns, and a lock rejected. \\
-L4 & On main & 12 Oct &
-CC-16 judges Python and JavaScript only. \\
-L5 & On main & 13 Oct &
-CC-26 is practice submit only. The issue stays open. \\
-L6 & On main & 13 Oct &
-Lock with a timeout rejected. The verdict write matches a claim token. \\
-L7 & Branch & 14 Oct &
-Filled contest and admin pages rejected. Empty pages, read-only profile. \\
-L8 & Planning & 14 Oct &
-Deliverable~1 requirement ids kept. No new rows. \\
+L1 & On main & 5 Nov &
+The compile directory is writable. The run stays unprivileged. \\
+L2 & On main & 5 Nov &
+The hardening agent may read and run. It may not publish, edit, or score. \\
+L3 & On main & 5 Nov &
+Signup mail is a 6-digit code. The long token is only the local fallback. \\
+L4 & Not launched & 5 Nov &
+One VM is the host shape. This account would be billed, so none was started. \\
 \bottomrule
 \end{tabularx}
 }
@@ -108,197 +98,76 @@ Deliverable~1 requirement ids kept. No new rows. \\
 
 \section{Entries}
 
-\subsection{L1. Agents}
-\meta{Planning \textperiodcentered\ 24 September 2026 \textperiodcentered\ Ridham Divyakant Solanki, reviewed by the team \textperiodcentered\ Modified}
+\subsection{L1. Sandbox permission}
+\meta{On main \textperiodcentered\ 5 November 2026 \textperiodcentered\ Om Chandrakant Chaudhari, reviewed by the team \textperiodcentered\ Modified}
 
 \step{1. Prompt}
-The proposal review asks for the scoring rule, a justification of 200 seats and 24 slots, which agent actions need no approval, and a statement that a malicious submission cannot escape. Revise the one-page proposal so those notes are absorbed.
+Compiled languages fail in CI. The sandbox drops every capability. Find the smallest change that lets the compiler write the binary, and keep the run unprivileged.
 
 \step{2. Reply (summarised)}
-The model keeps three agents, a test auditor, an integrity analyst, and a clarification bot, each with a tool list. It treats 200 and 24 as the numbers to build. The safety statement is one sentence: the agent is not allowed to publish a problem.
+The model first suggests putting \texttt{CAP\_DAC\_OVERRIDE} back on the compile container. The follow-up, after the failing test is shown, is to leave capabilities dropped and make the private temp directory mode \texttt{0777} before compile, then mode \texttt{0755} on the contents after a successful compile, so user 65534 can execute.
 
 \step{3. Decision}
 \begin{itemize}
-\item \textbf{Evaluation.} The threat note is the part worth keeping. The agent list is a schedule the team cannot run.
-\item \textbf{Error.} Tool lists with no approval rule, and two capacities with no derivation.
-\item \textbf{Change.} All three agents leave the four-sprint backlog. A sandbox escape stays in the threat model, and the demonstration has to show a hostile program. Agent approval rules stay planned until authoring exists.
-\item \textbf{Artifact.} Revised proposal notes for Deliverable~1.
-\item \textbf{Reason.} The reviewer was right about the threat. The draft was wrong about the schedule.
+\item \textbf{Evaluation.} The directory mode fixes the compile error without handing the container a capability.
+\item \textbf{Error.} Restoring \texttt{CAP\_DAC\_OVERRIDE} would undo the drop-all rule for every compile, including a hostile one.
+\item \textbf{Change.} \texttt{openWorkDir} chmod's the temp directory, then the compiled files. The run stays \texttt{--user 65534} and \texttt{/work} read-only.
+\item \textbf{Artifact.} \texttt{judge/src/runner.ts}. Jira CC-53. Pull request 47.
+\item \textbf{Reason.} C, C++, Java, and Go then accept a sum program. A fork bomb is still contained as RE or TLE.
 \end{itemize}
 
-\subsection{L2. Sprint plan}
-\meta{Planning \textperiodcentered\ 26 September 2026 \textperiodcentered\ Peeyush Agarwal, reviewed by Aritra Kolay \textperiodcentered\ Rejected}
+\subsection{L2. Agent boundary}
+\meta{On main \textperiodcentered\ 5 November 2026 \textperiodcentered\ Om Chandrakant Chaudhari, reviewed by the team \textperiodcentered\ Kept}
 
 \step{1. Prompt}
-Give a sprint plan that finishes before the demonstration on 8--13 November, and a Jira backlog that matches it. Check the point total against five people.
+Settle the test-hardening agent so a demo can show a result twice. The model is optional. Publish, edit, and score stay denied.
 
 \step{2. Reply (summarised)}
-The model returns about 170 points, a fifth sprint ending 4 December, and problem authoring during the demonstration week. The agents from L1 are still on the list, with a per-user submission quota and burst tests.
+The model proposes a second agent that may publish a repaired test when the score is low. It also proposes \texttt{gemini-2.5-flash}. A probe of the key returns 404 for that model and 200 for \texttt{gemini-3.6-flash}. With thinking left on, the call exceeds the old 20-second timeout. With thinking off and a 60-second limit, the call returns text.
 
 \step{3. Decision}
 \begin{itemize}
-\item \textbf{Evaluation.} The plan misses the demonstration on 8--13 November. Authoring in that week leaves no problems to show.
-\item \textbf{Error.} The arithmetic ignores the window, and the point total was not checked against five people.
-\item \textbf{Change.} 86 mandatory points across four sprints. Milestone~1 is 15 October and is the judge path. Milestone~2 is 6 November. Authoring moves to Sprint~3. Agents, the quota, and the burst tests come off the mandatory list.
-\item \textbf{Artifact.} Sprint plan, and the traceability rows that point at it.
-\item \textbf{Reason.} A plan that misses the demonstration date is not a plan.
+\item \textbf{Evaluation.} One worker, one tool list, and a saved run are enough for the slot.
+\item \textbf{Error.} A publish tool, and a model name the new keys cannot call.
+\item \textbf{Change.} Tools may read the problem and run the sandbox. A \texttt{publish} call is denied and audited. The model is \texttt{gemini-3.6-flash} with thinking off. Keys stay in gitignored env. \texttt{scripts/demo-harden.mjs} writes \texttt{Deliverables/demo/hardening.json}. A second run with \texttt{AGENT\_PROVIDER} unset writes \texttt{hardening-empty.json} and finishes in seconds. The slot opens the saved file.
+\item \textbf{Artifact.} \texttt{agent/src/engine/ai.test.ts}, \texttt{scripts/demo-harden.mjs}, the two JSON files.
+\item \textbf{Reason.} The deny is a test, not a slide. The empty-provider file is what we repeat if the model is slow.
 \end{itemize}
 
-\subsection{L3. Architecture}
-\meta{Planning \textperiodcentered\ 26 September 2026 \textperiodcentered\ Srujan Sachin Bhirud, reviewed by Om Chandrakant Chaudhari \textperiodcentered\ Modified}
+\subsection{L3. Six-digit mail}
+\meta{On main \textperiodcentered\ 5 November 2026 \textperiodcentered\ Om Chandrakant Chaudhari, reviewed by the team \textperiodcentered\ Modified}
 
 \step{1. Prompt}
-Draft the architecture section for Deliverable~1. Draw the components and two sequences: a practice submit, and a worker that dies before the verdict is saved. List only patterns that have a Jira issue. Stay on the Express, React, and Vite stack from the proposal. State the sprint cost of any framework rewrite.
+Signup in the demo should be the email code we already fought with, not a long token pasted from the page.
 
 \step{2. Reply (summarised)}
-The model recommends NestJS and Next.js, at a cost of about two sprints, plus Factory, Command, and Facade. Seats and verdicts share one lock per document with a 30-second timeout. Redis is described as a cache.
-
-\step{3. Follow-up}
-The stack is already chosen. Drop every pattern with no Jira key. A lock that expires during a run is not a verdict rule. Seats are a later sprint. Separate them from verdicts.
-
-\step{4. Follow-up reply (summarised)}
-The model withdraws the rewrite and the three patterns. It still proposes a Redis lock for seats, released in a \texttt{finally} block, and a verdict write that checks a judged flag and then ignores a second message.
-
-\step{5. Decision}
-\begin{itemize}
-\item \textbf{Evaluation.} The stack in the second reply is acceptable. The lock and the flag check are not.
-\item \textbf{Error.} The patterns are not in the backlog. Redis is not the source of truth. A flag read followed by a write loses when two workers commit.
-\item \textbf{Change.} Express, React, and Vite stay. MongoDB is the source of truth. Redis is the queue. Verdicts use a claim token, specified in L6. Seats, when that sprint starts, are one filtered update and a unique index.
-\item \textbf{Artifact.} Architecture section of Deliverable~1.
-\item \textbf{Reason.} The stack in the proposal is the one the team can finish.
-\end{itemize}
-
-\subsection{L4. Sandbox languages}
-\meta{On main \textperiodcentered\ 12 October 2026 \textperiodcentered\ Om Chandrakant Chaudhari, reviewed by Ridham Divyakant Solanki \textperiodcentered\ Modified}
-
-\step{1. Prompt}
-CC-16. Give the Docker arguments for one isolated run, and name the languages this commit should judge.
-
-\step{2. Reply (summarised)}
-The model turns on Python, JavaScript, and C++, because FR-15 lists C++ as optional. The container it describes has no network, a read-only root, a memory cap, a process cap, all capabilities dropped, and a kill at the time limit. It suggests proving isolation by reading \texttt{/etc/passwd}.
+The model keeps the long token and adds a mailer that also prints it. The follow-up is the code shape already used in the other tree: six digits, fifteen minutes, Mailpit on SMTP 1025.
 
 \step{3. Decision}
 \begin{itemize}
-\item \textbf{Evaluation.} The container flags match the threat kept in L1. C++ and the chosen file do not belong in this commit.
-\item \textbf{Error.} An optional language is treated as part of this commit. A file inside the image is treated as a host file.
-\item \textbf{Change.} This commit judges Python~3 and JavaScript. The isolation note uses a path that is not in the image. Further languages stay planned.
-\item \textbf{Artifact.} \texttt{feature/CC-16-sandbox-runner}, merged as pull request~7.
-\item \textbf{Reason.} Python and JavaScript are enough to show a verdict. The other compilers wait until this path is stable.
+\item \textbf{Evaluation.} A code a person can type is the thing the slot can show. Mailpit is local and costs nothing.
+\item \textbf{Error.} Returning the long token whenever mail is configured trains the demo on a path production hides.
+\item \textbf{Change.} \texttt{newVerifyToken} is a six-digit code, valid for fifteen minutes. The token is returned only when SMTP is unset and \texttt{NODE\_ENV} is not production. Auth tests still post whatever the API returns.
+\item \textbf{Artifact.} \texttt{server/src/domain/product.ts}, \texttt{server/src/mail.ts}, \texttt{client/src/pages/Auth.tsx}, Mailpit in \texttt{docker-compose.yml}.
+\item \textbf{Reason.} A local register returned \texttt{mailed: true}, Mailpit held the code, and \texttt{POST /api/auth/verify} returned 200.
 \end{itemize}
 
-\subsection{L5. Practice submit}
-\meta{On main \textperiodcentered\ 13 October 2026 \textperiodcentered\ Om Chandrakant Chaudhari, reviewed by Srujan Sachin Bhirud \textperiodcentered\ Modified}
+\subsection{L4. One VM}
+\meta{Not launched \textperiodcentered\ 5 November 2026 \textperiodcentered\ Om Chandrakant Chaudhari, reviewed by the team \textperiodcentered\ Rejected for this account}
 
 \step{1. Prompt}
-CC-26. Submit from the editor and show the verdict. Stay inside the sprint cut from L2. Seats are not this issue.
+The live demo runs on one AWS VM. This PC is the backup. Do not add a NAT gateway, a load balancer, or RDS. If a \texttt{t3.micro} would bill, stop.
 
 \step{2. Reply (summarised)}
-The model puts contest submit, a reserved seat, and the practice archive in one change, and it seeds several contest problems. Contest setup is CC-19, which is a later sprint.
+The model lists a public \texttt{t3.micro}, 20~GB gp3, ports 22 and 80, Caddy, and three systemd units. It treats a missing free-tier row as ``still free'' and offers to launch.
 
 \step{3. Decision}
 \begin{itemize}
-\item \textbf{Evaluation.} Practice submit is the part that belongs in this issue. A contest and a seat do not.
-\item \textbf{Error.} Sprint~1 has no contest. Seeding contest problems would present CC-19 as done.
-\item \textbf{Change.} Practice submit, the problem list, and one seeded problem. No seat check. Contest submit and a reserved seat stay in Sprint~2.
-\item \textbf{Artifact.} \texttt{feature/CC-26-submit-verdict}, merged as pull request~10. The request is part of CC-26, and the issue stays open.
-\item \textbf{Reason.} The milestone can show a verdict while the contest is still planned.
-\end{itemize}
-
-\subsection{L6. Exactly-once verdict}
-\meta{On main \textperiodcentered\ 13 October 2026 \textperiodcentered\ Om Chandrakant Chaudhari, reviewed by Peeyush Agarwal \textperiodcentered\ Modified}
-
-\step{1. Prompt}
-CC-27. A practice submission is queued on Redis. The worker can die after the container has started and before the verdict is written, and the message will be delivered again. Compare a lock per submission with a compare-and-set. Give the MongoDB filter and the test that fails if a stale worker still writes.
-
-\step{2. Reply (summarised)}
-The model takes a lock named \texttt{submission:<id>} with a 30-second time-to-live, refreshes it during the run, and releases it when the verdict is saved. The write is an ordinary update by submission id. The proposed test only checks that two workers cannot hold the lock together.
-
-\step{3. Follow-up}
-A later contest limit can outlast that lock. If the lock expires while the run continues, the second worker commits and the first worker overwrites it. Give the filter that makes the late update match no document. Do not use the lock.
-
-\step{4. Follow-up reply (summarised)}
-The model stores a random claim token when the worker takes the message, and filters the verdict update on the submission id and that token. Redelivery is described only as reading the pending entry again after a timeout. The new worker stores a new token first.
-
-\step{5. Decision}
-\begin{itemize}
-\item \textbf{Evaluation.} The filter in the second reply is the right write. The redelivery sentence does not separate a dead consumer from a slow one.
-\item \textbf{Error.} The 30-second lock fails open. A test of the lock does not catch a stale write.
-\item \textbf{Change.} Redis Streams consumer group, \texttt{XAUTOCLAIM} when the owner has disappeared, and \texttt{updateOne} on the id together with the claim token. The test shows that a stale token does not commit a verdict.
-\item \textbf{Artifact.} \texttt{feature/CC-27-exactly-once}, merged as pull request~11.\\
-Test: \texttt{server/src/domain/domain.test.ts}.
-\item \textbf{Reason.} Exactly-once is the database write. The queue may deliver the message twice.
-\end{itemize}
-
-\subsection{L7. Demonstration pages}
-\meta{Branch, not merged \textperiodcentered\ 14 October 2026 \textperiodcentered\ Om Chandrakant Chaudhari, reviewed by Srujan Sachin Bhirud \textperiodcentered\ Modified}
-
-\step{1. Prompt}
-CC-52. The home page links to \texttt{/arena}, \texttt{/authoring}, \texttt{/control}, and \texttt{/admin}, and those routes return 404. The header name should open a profile. Use an API that already exists. Do not add a write route, and do not mark a Jira issue done unless that behaviour is merged. Python and JavaScript are the only judged languages.
-
-\step{2. Reply (summarised)}
-The model builds contest registration, an authoring form, and an admin screen that edits roles. It adds \texttt{PATCH /api/me} for the name and the password, marks CC-18, CC-19, CC-24, CC-25, and CC-43 done when the pages render, seeds contest problems, and adds C++ because FR-15 lists it as optional.
-
-\step{3. Decision}
-\begin{itemize}
-\item \textbf{Evaluation.} Those screens are later issues. A page that renders is not a finished issue, and \texttt{PATCH /api/me} is not on this tree.
-\item \textbf{Error.} CC-18 is roles, CC-19 is contest setup, CC-24 and CC-25 are authoring, and CC-43 is the profile write. None of them is this branch. C++ is not judged yet.
-\item \textbf{Change.} Arena, authoring, control, and admin state the role and the sprint and link to the problem set. The profile reads \texttt{GET /api/me} and shows the name, the verified email, and the starting rating. Practice problems on this branch carry a source line for the Codeforces entries. That does not close CC-25.
-\item \textbf{Artifact.} \texttt{feature/CC-52-milestone-demo}, commit \texttt{188b762}. Not merged. \texttt{main} remains the CC-27 tree.
-\item \textbf{Reason.} The demonstration has to match the behaviour that runs.
-\end{itemize}
-
-\subsection{L8. Traceability}
-\meta{Planning \textperiodcentered\ 14 October 2026 \textperiodcentered\ Aritra Kolay, reviewed by Om Chandrakant Chaudhari \textperiodcentered\ Rejected}
-
-\step{1. Prompt}
-Update the traceability matrix for Deliverable~2. Include the demonstration pages from L7 and the languages that are still planned.
-
-\step{2. Reply (summarised)}
-The model invents new requirement identifiers. It rewrites FR-15 so that C, Java, and Go count as done, and it uses an older numbering in which FR-16 is the seat rule.
-
-\step{3. Decision}
-\begin{itemize}
-\item \textbf{Evaluation.} The Deliverable~1 identifiers already name the work. A second set does not.
-\item \textbf{Error.} FR-16 is not the seat rule in the submitted matrix. An empty page and an unjudged language are not completed requirements. CC-52 is not a requirement.
-\item \textbf{Change.} No new rows. When a status word is added, it is one of three: merged, for a pull request on \texttt{main}; reserved, for a demonstration page only; later, for work not started. L7 does not move any later issue to Done.
-\item \textbf{Artifact.} The Deliverable~1 matrix remains the table. This entry is the decision.
-\item \textbf{Reason.} A row has to mean what it meant on 26 September.
-\end{itemize}
-
-\subsection{L9. Sandbox compile directory}
-\meta{Implementation \textperiodcentered\ 5 November 2026 \textperiodcentered\ Om Chandrakant Chaudhari \textperiodcentered\ Kept}
-
-\step{1. Prompt}
-The CI \texttt{check} job fails C, C++, Java, and Go. The compiler reports that it cannot write \texttt{/work/main}.
-
-\step{2. Reply (summarised)}
-The compile container drops every capability, including the one that lets root ignore a directory mode. The private temp directory is mode \texttt{755}, so the compiler cannot create the binary. Make that directory writable before compile, and leave the run container unprivileged with \texttt{/work} read-only.
-
-\step{3. Decision}
-\begin{itemize}
-\item \textbf{Evaluation.} The diagnosis matches the CI log: \texttt{Permission denied}, verdict CE, and the same failure in the batch runner because it compiles through the same prepare step.
-\item \textbf{Error.} Widening the run container, or running the compiler as a user that still holds extra capabilities, would weaken the isolation the escape suite checks.
-\item \textbf{Change.} \texttt{prepare} sets the private directory to mode \texttt{777} and, after a successful compile, marks the binary executable for the unprivileged run user. CC-53.
-\item \textbf{Artifact.} \texttt{judge/src/runner.ts}. Regression: \texttt{judge/src/languages.test.ts} and \texttt{judge/src/batch.test.ts}.
-\item \textbf{Reason.} The compiler has to write a file. The submitted program still must not.
-\end{itemize}
-
-\subsection{L10. One hardening run with a model, and one without}
-\meta{Verification \textperiodcentered\ 5 November 2026 \textperiodcentered\ Om Chandrakant Chaudhari \textperiodcentered\ Kept}
-
-\step{1. Prompt}
-Run test hardening once with the Gemini keys and once with \texttt{AGENT\_PROVIDER} empty.
-
-\step{2. Reply (summarised)}
-Use the keys only from a gitignored env file. \texttt{gemini-2.5-flash} returns 404 for a new key. \texttt{gemini-3.6-flash} answers. A thinking model exceeds the call timeout, so the request disables thinking and caps the output. An empty provider must keep the deterministic attacks and say that no provider is set.
-
-\step{3. Decision}
-\begin{itemize}
-\item \textbf{Evaluation.} With the provider empty, the run on ``Count the vowels'' completed and recorded ``No AGENT\_PROVIDER is set.'' With \texttt{gemini-3.6-flash} and thinking disabled, the run on ``Reverse the word'' completed and kept two model attacks. A prohibited tool and a spent token budget are denied in \texttt{agent/src/engine/ai.test.ts}.
-\item \textbf{Error.} The first live call used a retired model id and then a thinking model that did not answer inside the old 20 second limit. Both fell back to the deterministic suite, which is the intended failure path, and neither is the run that is counted.
-\item \textbf{Change.} The Gemini call uses a 60 second limit, \texttt{thinkingBudget 0}, and \texttt{gemini-3.6-flash}. Keys stay in \texttt{.env}.
-\item \textbf{Artifact.} Hardening runs \texttt{6aec83013ff72db5e3fd3dc6} (model) and the empty-provider run on version \texttt{6acf3be0cbb993049db4a897}.
-\item \textbf{Reason.} The demo has to show both paths, and a timeout has to be visible rather than silent.
+\item \textbf{Evaluation.} The shape is right: one machine, Mongo and Redis on localhost, the judge on that machine's Docker socket.
+\item \textbf{Error.} \texttt{get-free-tier-usage} on 5 November lists only AWS Glue. EC2 is not in the 12-month allowance. Launching would bill.
+\item \textbf{Change.} No instance was started. \texttt{deploy/README.md} keeps the commands, including \texttt{aws ec2 stop-instances}, for an account that still has the allowance. The ten-minute script uses \texttt{http://127.0.0.1:5173}.
+\item \textbf{Artifact.} \texttt{deploy/Caddyfile}, the three unit files, \texttt{Deliverables/demo-script.md}.
+\item \textbf{Reason.} Actual cloud spend stays \$0. A billed instance left running would exhaust the course cap for no demo that this PC cannot already run.
 \end{itemize}
 
 \end{document}

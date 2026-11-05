@@ -1,10 +1,11 @@
 # CodeClash — Deliverable 3
 
 Team repository: https://github.com/SrujanBhirud/CodeClash
-Branch for this pack: `feature/CC-53-sandbox-and-parity`
-Measured on 5 November 2026 against that branch, with Docker Desktop 29.8.1, Node 22, and the local compose stack `codeclash-srujan`.
+Branch for this pack: `feature/CC-58-demo-pack`
+The submitted document is `Deliverable-3.tex` (and the PDF next to it). This file is the working note.
+Measured on 5 November 2026, with Docker Desktop 29.8.1, Node 22, and the local compose stack `codeclash-srujan`.
 
-Published `main` is not rewritten. Pull requests #40–#46 stay as they were merged. New work is CC-53. CC-52 is not merged.
+Published `main` is not rewritten. Pull requests #40–#46 stay as they were merged. CC-53 is pull request 47. CC-58 is this branch. CC-52 is not merged.
 
 ## Test report
 
@@ -109,7 +110,7 @@ Not Vercel. The API holds Socket.IO connections, the judge is a Redis consumer t
 
 One small Linux VM (AWS t2.micro / t3.micro in the free tier, or a GCP e2-micro) with Docker. The same `docker compose` file runs Mongo and Redis on that machine. The Node processes (server, judge, agent, and a built client served by the server or by a static file server on the same host) run beside them. The judge uses that machine's Docker socket. Secrets stay in the VM environment, not in git. Free-tier disk and egress stay inside the course cap.
 
-No instance was running in account `942893239786` (the only cloud CLI that was signed in; `gcloud` is not installed). Creating one was not done from this run. Bring the host up only after GitHub `check` and `e2e` are green, with `docker compose up -d`, `npm run build`, `npm run seed`, and the four Node processes. Point `CLIENT_ORIGIN` and `APP_URL` at the VM. Set `AGENT_PROVIDER` only if the demo should call Gemini.
+On 5 November 2026 `aws freetier get-free-tier-usage` listed only AWS Glue. EC2 was not in the allowance, so a `t3.micro` would bill and no instance was started. `deploy/README.md` is the host recipe for an account that still has the allowance, including `aws ec2 stop-instances`. The demo runs on this PC.
 
 ## Traceability
 

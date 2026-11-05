@@ -8,6 +8,7 @@ import { Auth } from './pages/Auth';
 import { Authoring } from './pages/Authoring';
 import { ContestRoom } from './pages/ContestRoom';
 import { Control } from './pages/Control';
+import { Guide } from './pages/Guide';
 import { Home } from './pages/Home';
 import { NotFound } from './pages/NotFound';
 import { Practice } from './pages/Practice';
@@ -57,6 +58,7 @@ export default function App() {
             {isSetter ? <NavLink to="/authoring">authoring</NavLink> : null}
             {isOrganiser ? <NavLink to="/control">control</NavLink> : null}
             {role === 'admin' ? <NavLink to="/admin">admin</NavLink> : null}
+            {role === 'admin' ? <NavLink to="/guide">guide</NavLink> : null}
           </nav>
           <div className="header-right">
             <ThemePicker />
@@ -88,6 +90,7 @@ export default function App() {
           <Route path="/authoring" element={isSetter ? <Authoring /> : session ? <Navigate to="/arena" /> : signIn} />
           <Route path="/control" element={isOrganiser ? <Control /> : session ? <Navigate to="/arena" /> : signIn} />
           <Route path="/admin" element={role === 'admin' ? <Admin me={session!.user.id} /> : session ? <Navigate to="/arena" /> : signIn} />
+          <Route path="/guide" element={role === 'admin' ? <Guide /> : session ? <Navigate to="/arena" /> : signIn} />
           <Route path="/profile" element={session ? <Profile session={session} onSession={setSession} onSignOut={signOut} /> : signIn} />
           <Route path="*" element={<NotFound />} />
         </Routes>

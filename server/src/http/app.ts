@@ -19,6 +19,8 @@ import { reserveSeat, withdrawSeat } from '../domain/registration.js';
 import { leaderboard } from '../domain/scoring.js';
 import { checkPassword, hashPassword, issueRefresh, readAccess, revokeRefresh, rotateRefresh, signAccess } from './auth.js';
 import { assertVerified, newVerifyToken, publicUser, rejudgeSubmissions, runSamples, solveRecord, verifyEmail } from '../domain/product.js';
+import { hashIp, runSimilarity } from '../domain/similarity.js';
+import { sendVerificationEmail } from '../mail.js';
 
 export interface AppDeps {
   db: Db;
@@ -177,11 +179,13 @@ export function createApp(deps: AppDeps) {
       const id = String(inserted.insertedId);
       const access = signAccess({ id, role: 'participant' });
       const refresh = await issueRefresh(db, id);
+      const mailed = await sendVerificationEmail(body.email.toLowerCase(), verify.token);
       res.status(201).json({
         access,
         refresh,
         user: { id, role: 'participant', displayName: body.displayName, emailVerified: false, rating: 1200 },
-        ...(process.env.NODE_ENV === 'production' ? {} : { verifyToken: verify.token }),
+        mailed,
+        ...(!mailed && process.env.NODE_ENV !== 'production' ? { verifyToken: verify.token } : {}),
       });
     } catch (error) {
       if ((error as { code?: number }).code === 11000) throw new HttpError(409, 'Email is already registered');
@@ -222,7 +226,13 @@ export function createApp(deps: AppDeps) {
       { $set: { verifyTokenHash: verify.tokenHash, verifyExpires: verify.expiresAt } },
     );
     if (updated.matchedCount === 0) throw new HttpError(409, 'This email is already verified');
-    res.json(process.env.NODE_ENV === 'production' ? { sent: true } : { sent: true, verifyToken: verify.token });
+    const existing = await db.collection('users').findOne({ _id: new ObjectId(user.sub) });
+    const mailed = existing ? await sendVerificationEmail(String(existing.email), verify.token) : false;
+    res.json({
+      sent: true,
+      mailed,
+      ...(!mailed && process.env.NODE_ENV !== 'production' ? { verifyToken: verify.token } : {}),
+    });
   }));
 
   app.post('/api/auth/refresh', asyncRoute(async (req, res) => {
@@ -701,7 +711,14 @@ export function createApp(deps: AppDeps) {
       code: z.string().min(1).max(64_000),
     }).parse(req.body);
     await submitLimit(user.sub);
-    const queued = await enqueueSubmission(db, { ...body, userId: user.sub, contestId: req.params.id, kind: 'contest', idempotencyKey: idempotencyKey(req) });
+    const queued = await enqueueSubmission(db, {
+      ...body,
+      userId: user.sub,
+      contestId: req.params.id,
+      kind: 'contest',
+      idempotencyKey: idempotencyKey(req),
+      ipHash: hashIp(req.ip || req.socket.remoteAddress || ''),
+    });
     if (!queued.replay) {
       await redis.xadd(queued.stream, '*', 'submissionId', queued.id);
       submitted.inc({ kind: 'contest' });
@@ -719,6 +736,60 @@ export function createApp(deps: AppDeps) {
     const result = await rejudgeSubmissions(db, redis, { contestId: req.params.id, actor: user.sub, reason: body.reason, submissionId: body.submissionId, problemId: body.problemId });
     await audit(db, user.sub, 'contest.rejudge', req.params.id, 'allow', { before: result.before, after: result.after, reason: body.reason });
     res.status(202).json({ count: result.count });
+  }));
+
+  app.get('/api/contests/:id/integrity', asyncRoute(async (req, res) => {
+    const user = requireRole(req, ['organiser', 'admin']);
+    const report = await db.collection('similarity_reports').findOne({ contestId: new ObjectId(req.params.id) });
+    const pairs = (report?.pairs as { userA: string; userB: string; problemId: string }[]) ?? [];
+    const userIds = [...new Set(pairs.flatMap((pair) => [pair.userA, pair.userB]))].map((id) => new ObjectId(id));
+    const problemIds = [...new Set(pairs.map((pair) => pair.problemId))].map((id) => new ObjectId(id));
+    const [users, problems] = await Promise.all([
+      userIds.length ? db.collection('users').find({ _id: { $in: userIds } }).project({ displayName: 1 }).toArray() : [],
+      problemIds.length ? db.collection('problems').find({ _id: { $in: problemIds } }).project({ title: 1 }).toArray() : [],
+    ]);
+    const names = new Map(users.map((row) => [String(row._id), row.displayName]));
+    const titles = new Map(problems.map((row) => [String(row._id), row.title]));
+    await audit(db, user.sub, 'integrity.view', req.params.id, 'allow', { reason: `${pairs.length} pairs` });
+    res.json({
+      updatedAt: report?.updatedAt ?? null,
+      pairs: pairs.map((pair) => ({
+        ...pair,
+        nameA: names.get(pair.userA) ?? pair.userA,
+        nameB: names.get(pair.userB) ?? pair.userB,
+        problem: titles.get(pair.problemId) ?? pair.problemId,
+      })),
+    });
+  }));
+
+  app.post('/api/contests/:id/integrity/run', asyncRoute(async (req, res) => {
+    const user = requireRole(req, ['organiser', 'admin']);
+    res.json(await runSimilarity(db, req.params.id, user.sub));
+  }));
+
+  app.get('/api/contests/:id/integrity/pairs/:pairId', asyncRoute(async (req, res) => {
+    const user = requireRole(req, ['organiser', 'admin']);
+    const report = await db.collection('similarity_reports').findOne({ contestId: new ObjectId(req.params.id) });
+    const pair = ((report?.pairs as { id: string; submissionA: string; submissionB: string }[]) ?? []).find((row) => row.id === req.params.pairId);
+    if (!pair) throw new HttpError(404, 'Pair not found');
+    const [a, b] = await Promise.all([
+      db.collection('submissions').findOne({ _id: new ObjectId(pair.submissionA) }, { projection: { code: 1, language: 1 } }),
+      db.collection('submissions').findOne({ _id: new ObjectId(pair.submissionB) }, { projection: { code: 1, language: 1 } }),
+    ]);
+    await audit(db, user.sub, 'integrity.view_code', req.params.pairId, 'allow', { reason: req.params.id });
+    res.json({ ...pair, codeA: a?.code ?? '', codeB: b?.code ?? '', languageA: a?.language ?? '', languageB: b?.language ?? '' });
+  }));
+
+  app.post('/api/contests/:id/integrity/pairs/:pairId', asyncRoute(async (req, res) => {
+    const user = requireRole(req, ['organiser', 'admin']);
+    const body = z.object({ decision: z.enum(['dismissed', 'confirmed']), note: z.string().max(500).default('') }).parse(req.body);
+    const updated = await db.collection('similarity_reports').updateOne(
+      { contestId: new ObjectId(req.params.id), 'pairs.id': req.params.pairId },
+      { $set: { 'pairs.$.status': body.decision, 'pairs.$.note': body.note } },
+    );
+    if (updated.matchedCount === 0) throw new HttpError(404, 'Pair not found');
+    await audit(db, user.sub, 'integrity.decision', req.params.pairId, body.decision, { reason: body.note });
+    res.json({ status: body.decision });
   }));
 
   app.post('/api/run', asyncRoute(async (req, res) => {

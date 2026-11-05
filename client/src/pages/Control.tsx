@@ -36,6 +36,8 @@ export function Control() {
   const [contests, setContests] = useState<Contest[]>([]);
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [selected, setSelected] = useState('');
+  const [integrityContest, setIntegrityContest] = useState('');
+  const [pairs, setPairs] = useState<{ id: string; nameA: string; nameB: string; problem: string; score: number; sameIp: boolean; status: string; codeA?: string; codeB?: string }[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -43,6 +45,7 @@ export function Control() {
     const rows = await api<Contest[]>('/api/contests');
     setContests(rows);
     setSelected((current) => current || rows.find((c) => c.type !== 'coding' && (c.status === 'running' || c.status === 'frozen'))?.id || '');
+    setIntegrityContest((current) => current || rows.find((c) => c.status !== 'cancelled')?.id || '');
   }, []);
 
   useEffect(() => {
@@ -268,6 +271,51 @@ export function Control() {
               <button className="btn sm" type="submit" disabled={!selected}>rejudge</button>
               <p className="muted small" style={{ margin: 0 }}>Finished submissions go back on the queue. The audit row stores the old verdicts and this reason.</p>
             </form>
+          </Box>
+          <Box title="integrity">
+            <div className="stack tight">
+              <select aria-label="Contest to check" value={integrityContest} onChange={(e) => { setIntegrityContest(e.target.value); setPairs([]); }}>
+                {contests.filter((c) => c.status !== 'cancelled').map((contest) => <option key={contest.id} value={contest.id}>{contest.title}</option>)}
+              </select>
+              <button className="btn sm" type="button" disabled={!integrityContest} onClick={() => {
+                setError('');
+                api<{ pairs: typeof pairs }>(`/api/contests/${integrityContest}/integrity/run`, { method: 'POST', body: '{}' })
+                  .then(() => api<{ pairs: typeof pairs }>(`/api/contests/${integrityContest}/integrity`))
+                  .then((report) => { setPairs(report.pairs); toast(`${report.pairs.length} similar pair(s)`, report.pairs.length ? 'warn' : 'ok'); })
+                  .catch((err) => setError(errorText(err)));
+              }}>run check</button>
+              <p className="muted small" style={{ margin: 0 }}>Compares the last accepted submission on each problem. A match is a review, never an automatic disqualification. Checks also run when a contest ends.</p>
+              {pairs.map((pair) => (
+                <div key={pair.id} className="stack tight" style={{ borderTop: '1px solid var(--line)', paddingTop: '0.4rem' }}>
+                  <span className="small">{pair.nameA} · {pair.nameB}</span>
+                  <span className="muted small">{pair.problem} · {Math.round(pair.score * 100)}%{pair.sameIp ? ' · same network' : ''} · {pair.status}</span>
+                  <div className="row">
+                    <button className="btn ghost sm" type="button" onClick={() => {
+                      api<typeof pair>(`/api/contests/${integrityContest}/integrity/pairs/${encodeURIComponent(pair.id)}`)
+                        .then((full) => setPairs((current) => current.map((row) => row.id === pair.id ? { ...row, ...full } : row)))
+                        .catch((err) => setError(errorText(err)));
+                    }}>view</button>
+                    <button className="btn sm" type="button" onClick={() => {
+                      api(`/api/contests/${integrityContest}/integrity/pairs/${encodeURIComponent(pair.id)}`, { method: 'POST', body: JSON.stringify({ decision: 'dismissed', note: '' }) })
+                        .then(() => setPairs((current) => current.map((row) => row.id === pair.id ? { ...row, status: 'dismissed' } : row)))
+                        .catch((err) => setError(errorText(err)));
+                    }}>dismiss</button>
+                    <button className="btn danger sm" type="button" onClick={() => {
+                      api(`/api/contests/${integrityContest}/integrity/pairs/${encodeURIComponent(pair.id)}`, { method: 'POST', body: JSON.stringify({ decision: 'confirmed', note: '' }) })
+                        .then(() => setPairs((current) => current.map((row) => row.id === pair.id ? { ...row, status: 'confirmed' } : row)))
+                        .catch((err) => setError(errorText(err)));
+                    }}>confirm</button>
+                  </div>
+                  {pair.codeA != null ? (
+                    <div className="two">
+                      {[pair.codeA, pair.codeB ?? ''].map((code, index) => (
+                        <pre key={index} className="small" style={{ margin: 0, overflow: 'auto', maxHeight: '12rem' }}>{code}</pre>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
           </Box>
           <Box title="lifecycle">
             <ol className="muted small" style={{ margin: 0, paddingLeft: '1.1rem', lineHeight: 1.9 }}>

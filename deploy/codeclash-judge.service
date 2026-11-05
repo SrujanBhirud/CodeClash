@@ -1,0 +1,12 @@
+[Unit]
+Description=CodeClash judge
+After=network.target docker.service codeclash-server.service
+
+[Service]
+WorkingDirectory=/opt/codeclash/judge
+EnvironmentFile=/opt/codeclash/server/.env
+ExecStart=/usr/bin/node dist/index.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

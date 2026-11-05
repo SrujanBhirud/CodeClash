@@ -51,7 +51,7 @@ test('landing offers sign in and paints the default theme', async ({ page }) => 
   await page.goto('/');
   await expect(page.getByRole('heading', { name: /Code\. Compete\. Conquer\./ })).toBeVisible();
   const bg = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
-  expect(bg).toBe('#ffffff');
+  expect(bg).toBe('#f6f4ef');
 });
 
 test('core flow: sign in, reserve a seat, see the standing', async ({ page }) => {

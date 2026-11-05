@@ -214,20 +214,24 @@ export function createApp(deps: AppDeps) {
   }));
 
   app.post('/api/auth/verify', asyncRoute(async (req, res) => {
-    const body = z.object({ token: z.string().min(10) }).parse(req.body);
+    const body = z.object({ token: z.string().regex(/^\d{6}$/) }).parse(req.body);
+    const key = `verify:${req.ip || 'local'}`;
+    const attempts = await redis.incr(key);
+    if (attempts === 1) await redis.expire(key, 600);
+    if (attempts > 8) throw new HttpError(429, 'Too many confirmation attempts');
     res.json(await verifyEmail(db, body.token));
   }));
 
   app.post('/api/auth/verify/resend', asyncRoute(async (req, res) => {
     const user = auth(req);
+    const existing = await db.collection('users').findOne({ _id: new ObjectId(user.sub) });
+    if (!existing || existing.emailVerified !== false) throw new HttpError(409, 'This email is already verified');
     const verify = newVerifyToken();
-    const updated = await db.collection('users').updateOne(
-      { _id: new ObjectId(user.sub), emailVerified: false },
+    await db.collection('users').updateOne(
+      { _id: existing._id },
       { $set: { verifyTokenHash: verify.tokenHash, verifyExpires: verify.expiresAt } },
     );
-    if (updated.matchedCount === 0) throw new HttpError(409, 'This email is already verified');
-    const existing = await db.collection('users').findOne({ _id: new ObjectId(user.sub) });
-    const mailed = existing ? await sendVerificationEmail(String(existing.email), verify.token) : false;
+    const mailed = await sendVerificationEmail(String(existing.email), verify.token);
     res.json({
       sent: true,
       mailed,

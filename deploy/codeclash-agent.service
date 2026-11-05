@@ -1,0 +1,12 @@
+[Unit]
+Description=CodeClash test-hardening agent
+After=network.target docker.service codeclash-server.service
+
+[Service]
+WorkingDirectory=/opt/codeclash/agent
+EnvironmentFile=/opt/codeclash/agent/.env
+ExecStart=/usr/bin/node dist/index.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,45 @@
+ID,Requirement,User story,Use case,Test,Jira,Status,Evidence or plan
+FR-01,Sign up and sign in with JWT and refresh tokens,US-01,UC-01,Vitest unit + API test,CC-17,Done,PR #9. auth.test.ts and the session tests in flows.test.ts.
+FR-02,Server-side checks for four roles,US-02,UC-01,Vitest unit + API test,CC-18,Done,requireRole and the admin routes merged in #13. The guard on every area is Sprint 2.
+FR-03*,"Grant and revoke roles, audited",US-03,UC-18,Vitest unit + API test,CC-39,Done,"The role-change endpoint, audited, is in #13. The search screen is CC-39."
+FR-04,Create and configure a contest,US-04,UC-14,Vitest unit + API test,CC-19,Done,"Sprint 2. The contests page on the progress-demo branch is reserved, not this behaviour."
+FR-05,Contest state machine and scheduler,US-05,UC-14,Vitest unit + API test,CC-23,Done,Sprint 2.
+FR-06,"Reserve a seat, never above capacity",US-06,UC-03,Concurrent integration test,CC-20,Done,Sprint 2.
+FR-07,FIFO waitlist with a position,US-07,UC-04,Concurrent integration test,CC-21,Done,Sprint 2.
+FR-08*,"Modify registration, keep the seat",US-09,UC-05,Vitest unit + API test,CC-43,Done,Sprint 1. The profile page only reads GET /api/me.
+FR-09,Withdrawal promotes the waitlist or decrements,US-08,UC-05,withdraw.spec.ts,CC-22,Done,Sprint 2.
+FR-10*,"Check-in, never required in order to submit",US-26,UC-06,Vitest unit + API test,CC-49,Done,Sprint 1.
+FR-11,One active seat per user per contest,US-06,UC-03,Concurrent integration test,CC-20,Done,Sprint 2.
+FR-12,Author problems with immutable versions,US-10,UC-11,Vitest unit + API test,CC-24,Done,Sprint 3.
+FR-13,"Upload tests, a reference, and limits",US-11,UC-12,Playwright E2E,CC-25,Done,Sprint 3. The progress-demo seed has 146 published problems. That seed is not the authoring workflow.
+FR-14,Publish check decided by sandbox verdicts,US-12,UC-13,publishcheck.spec.ts,CC-35,Done,"Sprint 3. This is the test auditor, and it waits on the dependencies in #7."
+FR-15,"Submit code, and in which languages",US-13,"UC-06, UC-07",Playwright E2E,CC-26,Done,"Practice submit merged in #10. Languages are Python 3 and JavaScript. A seat is not checked, because there is no contest. C++ stays optional and is not on."
+FR-16,"Isolated judging, one verdict",US-13,UC-07,Judge test suite,"CC-16, CC-26",Done,PRs #7 and #10. judge/src/decide.test.ts. The Accepted submit and the sandbox cases are in #8.
+FR-17,Exactly-once judging,US-14,UC-07,Worker-kill integration test,CC-27,Done,PR #11. domain.test.ts.
+FR-18*,Rejudge and invalidate,US-16,UC-16,Vitest unit + API test,CC-32,Done,Sprint 1.
+FR-19,"Practice archive, slot share, 403 rule",US-24,UC-02,practice.spec.ts,CC-44,Done,Practice judging uses the same pipeline and does not touch standings (#10). The 146-problem archive is the progress-demo branch. The slot share and the 403 rule are CC-44.
+FR-20,"Server-timed quiz, speed scoring",US-17,UC-08,scoring.quiz.spec.ts,CC-31,Done,Sprint 3 on the current board.
+FR-21,ICPC standings and one first-solve bonus,US-18,UC-09,"scoring.icpc.spec.ts, scoring.firstsolve.spec.ts","CC-31, CC-30",Done,Both are in Sprint 2 on the current board.
+FR-22,Push standings in real time,US-18,UC-09,Playwright E2E,CC-29,Done,Sprint 2.
+FR-23*,Frozen standings,US-19,UC-17,Vitest unit + API test,CC-33,Done,"In Sprint 2 on the board, not started."
+FR-24,Publish final standings,US-19,UC-17,Vitest unit + API test,CC-33,Done,Same issue as FR-23.
+FR-25*,Rating update after publish,US-25,UC-17,Vitest unit + API test,CC-45,Done,Sprint 1. The profile shows the starting rating only.
+FR-26*,Clarifications,US-20,"UC-10, UC-15",Vitest unit + API test,CC-36,Done,Sprint 1.
+FR-27*,"Register, drain, and evict judge workers",US-22,UC-19,Vitest unit + API test,CC-38,Done,"In Sprint 2 on the board, not started."
+FR-28,Append-only audit of privileged actions,"US-03, US-23",UC-20,Vitest unit + API test,CC-34,Done,PR #13. A role change writes an audit row. The audit user may only find and insert. Recording the previous role is the follow-up in #4.2.
+NFR-01,Standings reach clients within 1s at p95,US-18,UC-09,Load test + timing probe,CC-29,Done,Sprint 2.
+NFR-02,Judge turnaround at most 10s at p95,,UC-07,Queue metrics,CC-27,Done,A single practice submit returned a verdict in the progress demo. There is no load measurement.
+NFR-03,API p95 at most 300 ms,,All,Load test,CC-15,Done,No issue yet owns a measured load test.
+NFR-04,Reserved never above capacity,US-06,UC-03,Concurrent test + invariant query,"CC-20, CC-41",Done,Sprint 2 and Sprint 3.
+NFR-05,One verdict per submission,US-14,UC-07,Worker-kill test + invariant query,"CC-27, CC-41",Done,The stale-token test is merged. The invariant query is CC-41.
+NFR-06,Isolated execution with limits,,UC-07,Isolation test suite,"CC-16, CC-42",Done,"No network, a read-only root, memory and pid caps, capabilities dropped, kill at the time limit (#7). The programs in §8.1 are what we ran. The escape suite issue is CC-42."
+NFR-07,OWASP ASVS level 1 basics,,All,Tests + ZAP baseline scan,CC-15,Done,"Argon2id, server-side checks, and zod validation are merged. A ZAP scan is not done."
+NFR-08,99% availability in contest windows,,All,Chaos test (nightly),CC-15,Done,Failure drills with CC-41.
+NFR-09,"Daily backups, RPO 24 h, RTO 2 h",,All,Restore drill,CC-46,Done,Sprint 3.
+NFR-10,"Full audit coverage, records immutable",US-23,UC-20,DB privileges test,CC-34,Done,"Insert-only audit database merged in #13. The role update and its audit row are still separate writes, and the test does not yet use the audit database."
+NFR-11,"Browser support, readable on phones",,All,axe-core in Playwright,CC-47,Done,Sprint 1.
+NFR-12,"Lint boundaries, coverage, fast CI",,All,CI gates,CC-3,Done,"CI runs lint, typecheck, and a coverage gate (#8). There is no module-boundary rule."
+NFR-13,Testcontainers and a nightly invariant suite,,All,GitHub Actions nightly job,"CC-3, CC-41",Done,"Integration tests use mongodb-memory-server, not Testcontainers. No nightly job."
+NFR-14,Add judge workers with no code change,US-22,UC-19,Throughput measurement,CC-15,Done,A second worker can claim a dead worker's message through XAUTOCLAIM.
+NFR-15,Health endpoint and JSON logs,,All,Review,CC-48,Done,GET /health is merged. The judge logs to stdout.
+NFR-16,Server clock only,"US-05, US-17","UC-08, UC-14",Skewed-clock unit tests,"CC-23, CC-31",Done,Sprints 2 and 3.

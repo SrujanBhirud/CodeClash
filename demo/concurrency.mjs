@@ -24,7 +24,6 @@ const green = (text) => paint('32', text);
 const red = (text) => paint('31', text);
 const yellow = (text) => paint('33', text);
 const cyan = (text) => paint('36', text);
-const mag = (text) => paint('35', text);
 
 function say(text = '') {
   console.log(text);

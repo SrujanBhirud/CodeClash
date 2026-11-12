@@ -1,3 +1,4 @@
+/** Contest jobs go first. Practice keeps a small share while a contest is live. */
 import { practiceSlotCap } from '@codeclash/shared';
 
 /** Practice keeps its 20% share; with no contest backlog it may borrow one idle slot. */

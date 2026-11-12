@@ -1,3 +1,4 @@
+/** Sends the six-digit confirmation code. A failed send does not block signup. */
 import nodemailer from 'nodemailer';
 
 /** Thrown when SMTP_URL cannot be used. Port 25 is refused because cloud networks, including Oracle Cloud, block it. */

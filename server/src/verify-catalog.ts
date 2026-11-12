@@ -1,3 +1,4 @@
+/** Runs every catalog reference and wrong solution in the sandbox. */
 import { defaultLimit } from '@codeclash/shared';
 import { judgeBatch } from '@codeclash/judge/runner';
 import { CATALOG } from './catalog.js';

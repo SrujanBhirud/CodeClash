@@ -1,3 +1,4 @@
+/** One practice problem. Run samples stores nothing. */
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api';

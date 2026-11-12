@@ -1,3 +1,4 @@
+/** Claims one hardening run and stores mutants and proposals. */
 import { randomBytes } from 'node:crypto';
 import { draftSpec, parseSpec, SpecError, type SourceLanguage } from '@codeclash/shared';
 import { type Db, ObjectId } from 'mongodb';

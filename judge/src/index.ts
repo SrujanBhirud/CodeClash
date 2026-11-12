@@ -1,3 +1,4 @@
+/** Judge worker. Reads Redis, claims a submission, and runs it in Docker. */
 import { defaultLimit, type SourceLanguage } from '@codeclash/shared';
 import 'dotenv/config';
 import { randomBytes } from 'node:crypto';

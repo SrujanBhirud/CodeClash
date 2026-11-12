@@ -1,3 +1,4 @@
+/** The rest of the hand-written practice catalog. */
 import { array, ints, letters, picker, problem, py, secret, shown, type CatalogProblem } from './catalog.js';
 
 function fibonacci(n: number) {

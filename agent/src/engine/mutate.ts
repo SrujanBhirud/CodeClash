@@ -1,3 +1,4 @@
+/** One-edit mutants of the reference. Comments and strings are left alone. */
 import type { SourceLanguage } from '@codeclash/shared';
 
 export interface Mutant {

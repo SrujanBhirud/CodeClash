@@ -1,3 +1,4 @@
+/** Setter flow: statement, tests, solutions, editorial, then the publish check. */
 import { Bot, Check, CircleDashed, FilePlus2, FileUp, Globe, Lock, Plus, Save, Search, ShieldCheck, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useState, type DragEvent, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';

@@ -1,3 +1,4 @@
+/** Two model calls at most. A reply that asks to publish or edit tests is dropped. */
 import { createHash } from 'node:crypto';
 import { gateTool, SOURCE_LANGUAGES, type GateDecision } from '@codeclash/shared';
 import { z } from 'zod';

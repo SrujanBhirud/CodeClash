@@ -1,3 +1,4 @@
+/** Problem versions, test zips, the publish check, and approving hardening proposals. */
 import type { SourceLanguage } from '@codeclash/shared';
 import AdmZip from 'adm-zip';
 import { type Db, ObjectId } from 'mongodb';

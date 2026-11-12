@@ -1,3 +1,4 @@
+/** Rating, streak, display name, and password. */
 import { Eye, EyeOff, LogOut } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { api, type Session } from '../api';

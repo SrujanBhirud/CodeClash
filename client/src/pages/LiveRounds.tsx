@@ -1,3 +1,4 @@
+/** Running contests and their judging traffic, refreshed every few seconds. */
 import { Activity, ArrowRight, Hourglass, Inbox, Trophy, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';

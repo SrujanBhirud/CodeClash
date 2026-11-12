@@ -1,3 +1,4 @@
+/** Compares submissions after names and numbers are normalised. Pairs at 0.7 or above are stored. */
 import { createHash } from 'node:crypto';
 import { type Db, ObjectId } from 'mongodb';
 import { auditCollection } from '../db/audit.js';

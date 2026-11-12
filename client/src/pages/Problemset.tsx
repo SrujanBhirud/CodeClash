@@ -1,3 +1,4 @@
+/** Practice list. Private problems stay out until their contest is published. */
 import { BookOpenCheck, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';

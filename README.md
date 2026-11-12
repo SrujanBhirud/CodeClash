@@ -2,6 +2,36 @@
 
 Local platform for live coding and quiz contests. The browser talks to an API. A separate judge runs each submission in its own container. MongoDB stores the contest data. Redis carries the judge queue.
 
+## Hosted copy
+
+The review site is [http://129.225.92.29](http://129.225.92.29). Health is [http://129.225.92.29/health](http://129.225.92.29/health).
+
+DEMO accounts use the password `codeclash` and are already verified:
+
+| Role | Email |
+| --- | --- |
+| admin | `demo-admin@codeclash.dev` |
+| setter | `demo-setter@codeclash.dev` |
+| organiser | `demo-organiser@codeclash.dev` |
+| participant | `demo-student@codeclash.dev`, `demo-rival@codeclash.dev` |
+
+A new signup on that host sends mail through Oracle Email Delivery on port 587. Gmail drops messages whose From address is `@gmail.com` and did not come from Google, so use a DEMO account for the walkthrough.
+
+## Where the code lives
+
+| Folder | What it is |
+| --- | --- |
+| `client/` | React app |
+| `server/` | HTTP API, seats, scoring, mail |
+| `judge/` | Docker sandbox and the Redis consumer |
+| `agent/` | Test-hardening worker |
+| `packages/shared/` | Specs, scoring, and the role gate |
+| `demo/` | Paste files for the review. Not part of the running app |
+| `docs/` | Traceability sheet and [contribution counts](docs/contributions.pdf) |
+| `Deliverables/` | Course PDFs only: Deliverable 0, 1, 2, and 3 |
+
+`eslint.config.mjs`, `playwright.config.ts`, `package.json`, and `docker-compose.yml` stay at the root because the tools look for them there.
+
 ## What you need
 
 - Node.js 22 or newer, with npm

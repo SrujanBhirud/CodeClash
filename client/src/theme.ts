@@ -1,3 +1,4 @@
+/** Light and dark theme, stored in this browser. */
 import { useSyncExternalStore } from 'react';
 
 export interface Palette {

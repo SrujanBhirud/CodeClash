@@ -1,3 +1,4 @@
+/** Sign up, sign in, and the six-digit confirmation form. */
 import { ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';

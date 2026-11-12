@@ -1,3 +1,4 @@
+/** Routes and the header. Role decides which links appear. */
 import { LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';

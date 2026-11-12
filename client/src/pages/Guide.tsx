@@ -1,3 +1,4 @@
+/** Short notes for the admin, including the DEMO accounts. */
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 

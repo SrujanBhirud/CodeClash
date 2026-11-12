@@ -1,3 +1,4 @@
+/** Turns a container result into AC, WA, TLE, MLE, RE, or CE. */
 import { partialScore, type SubtaskDef } from '@codeclash/shared';
 
 export type JudgeVerdict = 'AC' | 'WA' | 'TLE' | 'MLE' | 'RE' | 'CE';

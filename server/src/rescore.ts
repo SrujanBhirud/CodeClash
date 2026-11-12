@@ -1,3 +1,4 @@
+/** Rebuilds stored standings after a scoring change. */
 import 'dotenv/config';
 import { MongoClient } from 'mongodb';
 import { recomputeStanding } from './domain/scoring.js';

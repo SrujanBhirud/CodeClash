@@ -1,3 +1,4 @@
+/** Shows a hardening run and holds proposals until the setter approves them. */
 import { ArrowRight, Bot, Check, Play, Square, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, isAbort } from '../api';

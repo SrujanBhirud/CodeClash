@@ -1,3 +1,4 @@
+/** API process. Connects Mongo, Redis, and Socket.IO, then serves HTTP. The judge and the agent are other processes. */
 import 'dotenv/config';
 import { expireRuns } from '@codeclash/agent/worker';
 import { createServer } from 'node:http';

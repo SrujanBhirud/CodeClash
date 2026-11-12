@@ -1,3 +1,4 @@
+/** Shared buttons, toasts, and status pills. */
 import { AlertTriangle, Check, CheckCircle2, Copy, Info, Loader2, X, XCircle } from 'lucide-react';
 import { lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { api, OFFLINE } from './api';

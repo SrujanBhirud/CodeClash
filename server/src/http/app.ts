@@ -1,3 +1,4 @@
+/** HTTP routes: auth, contests, submissions, authoring, integrity, and admin. */
 import {
   quizScore, streakBonus, defaultLimits, draftSpec, parseSpec, ROLES, SOURCE_LANGUAGES, SpecError, validateInput,
   type ContestStatus, type Role,

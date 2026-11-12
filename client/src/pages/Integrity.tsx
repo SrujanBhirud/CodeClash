@@ -1,3 +1,4 @@
+/** Review page for similar pairs. Confirm or dismiss is kept. */
 import { Check, Fingerprint, RefreshCw, RotateCcw, ScanSearch, ShieldAlert, Wifi, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';

@@ -1,3 +1,4 @@
+/** Unknown URL. */
 import { useLocation, Link } from 'react-router-dom';
 
 export function NotFound() {

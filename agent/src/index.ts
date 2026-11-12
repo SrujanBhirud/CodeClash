@@ -1,3 +1,4 @@
+/** Hardening worker. Waits on the agent Redis stream and reports whether a model is configured. */
 import 'dotenv/config';
 import { hostname } from 'node:os';
 import { Redis } from 'ioredis';

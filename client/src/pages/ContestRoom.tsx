@@ -1,3 +1,4 @@
+/** One contest: seat, problems, standings, and the editor. */
 import { ArrowLeft, Check, Clock, List, Lock, Snowflake, Trophy, UserPlus, Users, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';

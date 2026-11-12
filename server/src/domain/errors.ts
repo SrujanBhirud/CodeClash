@@ -1,3 +1,4 @@
+/** HTTP error type, and the check for a duplicate Mongo key. */
 export class HttpError extends Error {
   constructor(
     public status: number,

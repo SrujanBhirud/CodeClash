@@ -1,3 +1,4 @@
+/** Email confirmation codes, rejudge, ratings, and sample runs. */
 import { defaultLimit, practiceStreak, rateContest, type Role, type SourceLanguage } from '@codeclash/shared';
 import { createHash, randomInt } from 'node:crypto';
 import { type Db, ObjectId } from 'mongodb';

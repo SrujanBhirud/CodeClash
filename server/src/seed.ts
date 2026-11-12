@@ -1,3 +1,4 @@
+/** Loads the local dataset. Safe to run again. It only replaces rows it created. */
 import { defaultLimits, seededRng, SOURCE_LANGUAGES, type SourceLanguage } from '@codeclash/shared';
 import 'dotenv/config';
 import { hash } from '@node-rs/argon2';

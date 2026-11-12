@@ -1,3 +1,4 @@
+/** The palette button in the header. */
 import { Check, Palette, Shuffle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { setTheme, THEMES, useTheme, type Theme } from './theme';

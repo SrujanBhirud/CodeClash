@@ -1,3 +1,4 @@
+/** Reserves and withdraws a seat in one transaction. Reserved never passes capacity. */
 import { type ClientSession, type Db, ObjectId } from 'mongodb';
 import { HttpError, isDuplicateKey } from './errors.js';
 
@@ -23,6 +24,7 @@ export async function reserveSeat(db: Db, contestId: string, userId: string): Pr
         result = { outcome: 'existing', seatId: String(held._id), position: held.waitlistPos ?? undefined };
         return;
       }
+      // The increment matches only while reserved is still below capacity, so two requests cannot both take the last seat.
       const updated = await db.collection('contests').findOneAndUpdate(
         {
           _id: cid,

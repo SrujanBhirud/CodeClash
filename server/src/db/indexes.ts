@@ -1,3 +1,4 @@
+/** Indexes. One active seat per person per contest is unique. */
 import type { Db } from 'mongodb';
 
 /** Audit indexes live with the audit database and are created by mongo-init. */

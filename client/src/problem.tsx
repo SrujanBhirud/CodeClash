@@ -1,3 +1,4 @@
+/** Renders a statement, samples, and the editor panel. */
 import { BookOpen, FileUp, RotateCcw, Send } from 'lucide-react';
 import { Fragment, useRef, useState, type ReactNode } from 'react';
 import {

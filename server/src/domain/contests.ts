@@ -1,3 +1,4 @@
+/** Moves a contest through its statuses, by hand or when a time is reached. */
 import { canTransition, type ContestStatus } from '@codeclash/shared';
 import { type Db, ObjectId } from 'mongodb';
 import { auditCollection } from '../db/audit.js';

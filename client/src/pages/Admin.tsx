@@ -1,3 +1,4 @@
+/** People, judge workers, and the audit search. */
 import { Plus, Search } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api';

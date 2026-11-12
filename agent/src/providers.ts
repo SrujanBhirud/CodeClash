@@ -1,3 +1,4 @@
+/** Model clients. Missing keys leave the run in deterministic mode. */
 import type { AIStatus } from './engine/pipeline.js';
 
 export interface Completion { text: string; tokens: number }

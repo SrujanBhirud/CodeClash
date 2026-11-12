@@ -1,3 +1,4 @@
+/** Small edits of existing tests, used when a problem has no input spec. */
 function normalize(text: string) {
   return text.replace(/\r\n/g, '\n').trim();
 }

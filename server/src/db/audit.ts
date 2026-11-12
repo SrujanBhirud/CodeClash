@@ -1,3 +1,4 @@
+/** Separate append-only database. The app user cannot change or delete those rows. */
 import { type Db, type Document } from 'mongodb';
 
 let auditDatabase: Db | null = null;

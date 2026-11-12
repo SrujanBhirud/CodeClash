@@ -1,3 +1,4 @@
+/** Organiser desk: live rounds, contest transitions, quiz, and rejudge. */
 import { ArrowDown, ArrowRight, ArrowUp, Fingerprint, Lock, Megaphone, Plus, Search } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';

@@ -1,3 +1,4 @@
+/** Fetch wrapper. Attaches the access token and refreshes it once on 401. */
 const KEY = 'codeclash.session';
 export const SIGNED_OUT = 'codeclash:signed-out';
 

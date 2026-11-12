@@ -1,3 +1,4 @@
+/** Builds the container: no network, read-only root, memory cap, and a hard kill. */
 import type { SourceLanguage } from '@codeclash/shared';
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
@@ -107,6 +108,7 @@ function spec(language: SourceLanguage): LangSpec {
 export function dockerArgs(req: RunRequest, workDir: string, name = containerName()): string[] {
   const lang = spec(req.language);
   const seconds = String(Math.ceil(req.timeMs / 1000) + 2);
+  // One disposable container. No network, no extra privileges, and a kill the program cannot catch.
   return [
     'run', '--rm',
     '--name', name,

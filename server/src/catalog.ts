@@ -1,3 +1,4 @@
+/** Hand-written practice problems used by the seed. */
 import { seededRng } from '@codeclash/shared';
 
 export interface CatalogTest { input: string; output: string; hidden: boolean; group?: string }

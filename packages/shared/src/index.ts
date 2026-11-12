@@ -1,3 +1,4 @@
+/** Shared rules: roles, verdicts, limits, scoring, and which agent tools are allowed. */
 export * from './spec.js';
 
 export const VERDICTS = ['AC', 'WA', 'TLE', 'MLE', 'RE', 'CE'] as const;

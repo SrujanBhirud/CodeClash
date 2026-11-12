@@ -1,3 +1,4 @@
+/** Practice list. Private problems stay out until their contest is published. */
 import { BookOpenCheck, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -159,13 +160,7 @@ export function Problemset() {
                 <div className="row between"><span className="muted small">solve streak</span><b className="num">{me.streak} day{me.streak === 1 ? '' : 's'}</b></div>
                 <Link className="small" to="/profile">profile</Link>
               </div>
-            ) : <p className="muted small" style={{ margin: 0 }}>Sign in to see your rating and streak. Anyone can browse.</p>}
-          </Box>
-          <Box title="how scoring works">
-            <p className="muted small" style={{ margin: 0 }}>Run samples checks the visible examples and records nothing. Submit judges the hidden tests. A problem with subtasks keeps the points of every group you fully solve.</p>
-          </Box>
-          <Box title="sources">
-            <p className="muted small" style={{ margin: 0 }}>Problems marked Codeforces come from the DeepMind CodeContests dataset (CC BY 4.0). Each was re-verified in our sandbox before import.</p>
+            ) : <Link className="small" to="/auth">sign in</Link>}
           </Box>
         </aside>
       </div>

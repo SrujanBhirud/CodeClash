@@ -1,3 +1,4 @@
+/** Rating, streak, display name, and password. */
 import { Eye, EyeOff, LogOut } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { api, type Session } from '../api';
@@ -90,7 +91,6 @@ export function Profile({ session, onSession, onSignOut }: {
             <span style={{ width: `${Math.max(6, Math.min(100, ((rating - 100) / 2300) * 100))}%` }} />
             <i style={{ left: `${((1200 - 100) / 2300) * 100}%` }} />
           </div>
-          <p className="muted small">Contest Elo. New accounts start at 1200. The mark on the bar is that start.</p>
         </Box>
 
         <Box title="streak">
@@ -99,7 +99,6 @@ export function Profile({ session, onSession, onSignOut }: {
             <span className="muted">day{(me?.streak ?? 0) === 1 ? '' : 's'}</span>
           </div>
           <Heatmap days={me?.days ?? []} />
-          <p className="muted small">Consecutive days with an accepted solution, counting back from today or yesterday. Filled cells are days you solved something.</p>
         </Box>
 
         <Box title="name">

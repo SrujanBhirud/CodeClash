@@ -1,3 +1,4 @@
+/** The people, problems, and contests inserted by the seed. */
 import type { Rng } from '@codeclash/shared';
 
 /** One documented password for every demo account. */

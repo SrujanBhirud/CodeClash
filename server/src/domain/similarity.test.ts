@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { codeScore, tokenize } from './similarity.js';
+import { codeScore, sharedLines, tokenize } from './similarity.js';
 
 const python = `
 def longest(values):
@@ -49,6 +49,14 @@ describe('similarity tokens', () => {
       expect(tokens.join(' ')).not.toMatch(/note/);
       expect(tokens).toContain('ID');
     }
+  });
+
+  it('marks the lines two programs share, keeping line numbers across comments', () => {
+    const withComment = `/* header\n   spans two lines */\n${renamed}`;
+    const shared = sharedLines(python, withComment);
+    expect(shared.a).toEqual([2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(shared.b).toEqual([4, 5, 6, 7, 8, 9, 10, 11]);
+    expect(sharedLines(python, other).a.length).toBeLessThan(4);
   });
 
   it('ignores a fingerprint that is shared by most submissions', () => {

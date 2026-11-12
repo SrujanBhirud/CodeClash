@@ -158,6 +158,14 @@ describe('authoring', () => {
     expect((await api('get', `/api/archive/${problemId}`)).body.title).toBe('Double it');
     const open = await api('get', `/api/problem-versions/${versionId}/public`);
     expect(open.body).toMatchObject({ tags: ['math'], limits: { python: { timeMs: 1000, memoryMb: 128 } } });
+
+    expect((await api('put', `/api/problems/${problemId}/visibility`, neha.token, { visibility: 'private' })).status).toBe(403);
+    const hidden = await api('put', `/api/problems/${problemId}/visibility`, setter, { visibility: 'private' });
+    expect(hidden.body).toMatchObject({ visibility: 'private', listed: false, usedIn: [] });
+    expect((await api('get', '/api/archive')).body.items.map((row: { versionId: string }) => row.versionId)).not.toContain(versionId);
+    expect((await api('get', `/api/problem-versions/${versionId}/public`)).status).toBe(403);
+    expect((await api('get', `/api/problem-versions/${versionId}`, setter)).body).toMatchObject({ visibility: 'private', listed: false });
+    expect((await api('put', `/api/problems/${problemId}/visibility`, setter, { visibility: 'public' })).body.listed).toBe(true);
   });
 
   it('blocks a version whose wrong solution survives, then reopens it for edits', async () => {
@@ -370,6 +378,12 @@ describe('contest lifecycle', () => {
     const board = await api('get', `/api/contests/${contestId}/leaderboard`);
     expect(board.body[0]).toMatchObject({ displayName: 'Neha', solved: 1 });
     expect(board.body[0].cells[problemId]).toMatchObject({ solved: true, tries: 0 });
+
+    expect((await api('get', '/api/control/live', neha.token)).status).toBe(403);
+    const live = await api('get', '/api/control/live', organiser);
+    expect(live.body.contests.find((row: { id: string }) => row.id === contestId)).toMatchObject({
+      status: 'running', submissions: 1, accepted: 1, pending: 0, leaders: [{ displayName: 'Neha', solved: 1 }],
+    });
   });
 
   it('runs the quiz: open, answer once, reveal, and draw from the bank', async () => {

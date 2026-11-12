@@ -1,0 +1,42 @@
+Leap year — paste these into Authoring (you already have leap-year-tests.zip)
+
+Title
+Leap year
+
+Visibility
+Private
+
+Difficulty
+easy
+
+Tags
+math, implementation
+
+Statement
+A year has 366 days when it is a leap year. The Gregorian calendar decides it like this:
+
+- a year divisible by 4 is a leap year,
+- except a year divisible by 100, which is not,
+- except a year divisible by 400, which is a leap year after all.
+
+Given a year, say whether it is a leap year.
+
+Input
+One line with an integer `y` (1 ≤ y ≤ 9999).
+
+Output
+Print `Leap` if `y` is a leap year, and `Common` otherwise.
+
+Example 1
+input
+2024
+
+output
+Leap
+
+Example 2
+input
+2023
+
+output
+Common

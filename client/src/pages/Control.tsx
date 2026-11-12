@@ -1,11 +1,14 @@
-import { ArrowDown, ArrowRight, ArrowUp, Megaphone, Plus, Search } from 'lucide-react';
+/** Organiser desk: live rounds, contest transitions, quiz, and rejudge. */
+import { ArrowDown, ArrowRight, ArrowUp, Fingerprint, Lock, Megaphone, Plus, Search } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { Alert, Box, ConfirmDialog, Empty, errorText, formatWhen, letter, StatusPill, toast } from '../ui';
+import { LiveRounds } from './LiveRounds';
 
 interface Contest { id: string; title: string; status: string; type: string; reserved: number; capacity: number; startsAt: string }
-interface CatalogItem { problemId: string; title: string; tags: string[] }
+interface CatalogItem { problemId: string; title: string; tags: string[]; visibility?: 'public' | 'private'; listed?: boolean }
+type Tab = 'live' | 'contests' | 'new';
 
 const NEXT: Record<string, { to: string; label: string } | undefined> = {
   draft: { to: 'registration_open', label: 'open registration' },
@@ -21,6 +24,8 @@ function localInput(date: Date) {
 }
 
 export function Control() {
+  const [params, setParams] = useSearchParams();
+  const tab = (params.get('tab') as Tab | null) ?? 'live';
   const [title, setTitle] = useState('Department round');
   const [type, setType] = useState<'coding' | 'quiz' | 'mixed'>('mixed');
   const [capacity, setCapacity] = useState(200);
@@ -37,8 +42,6 @@ export function Control() {
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [quizContest, setQuizContest] = useState('');
   const [rejudgeContest, setRejudgeContest] = useState('');
-  const [integrityContest, setIntegrityContest] = useState('');
-  const [pairs, setPairs] = useState<{ id: string; nameA: string; nameB: string; problem: string; score: number; sameIp: boolean; status: string; codeA?: string; codeB?: string }[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [pending, setPending] = useState<{ title: string; body: string; confirm: string; danger?: boolean; run: () => Promise<void> } | null>(null);
@@ -51,7 +54,6 @@ export function Control() {
     setQuizContest((current) => current || liveQuiz);
     const fallback = rows.find((c) => c.status !== 'cancelled')?.id || '';
     setRejudgeContest((current) => current || fallback);
-    setIntegrityContest((current) => current || fallback);
   }, []);
 
   useEffect(() => {
@@ -100,6 +102,7 @@ export function Control() {
       if (startNow) await api(`/api/contests/${result.id}/transition`, { method: 'POST', body: JSON.stringify({ to: 'running' }) });
       toast(startNow ? `“${title}” is live` : 'Registration is open. The contest starts on schedule.', 'ok');
       await reload();
+      setParams({ tab: startNow ? 'live' : 'contests' });
     } catch (err) {
       setError(errorText(err));
     } finally {
@@ -160,7 +163,10 @@ export function Control() {
 
   return (
     <div className="page">
-      <div className="page-head"><div><h1>Control</h1><p>Run the contest lifecycle and push quiz questions.</p></div></div>
+      <div className="page-head">
+        <div><h1>Control</h1><p>Run the contest lifecycle and push quiz questions.</p></div>
+        <button className="btn primary" type="button" onClick={() => setParams({ tab: 'new' })}><Plus size={14} /> new contest</button>
+      </div>
       {error ? <Alert>{error}</Alert> : null}
 
       <div className="stats">
@@ -170,9 +176,16 @@ export function Control() {
         <div className="box stat"><b>{catalog.length}</b><span>published problems</span></div>
       </div>
 
+      <nav className="tabs" role="tablist" aria-label="Control">
+        <button type="button" role="tab" aria-selected={tab === 'live'} className={`tab ${tab === 'live' ? 'on' : ''}`} onClick={() => setParams({ tab: 'live' })}>live rounds <span className="count">{liveCount}</span></button>
+        <button type="button" role="tab" aria-selected={tab === 'contests'} className={`tab ${tab === 'contests' ? 'on' : ''}`} onClick={() => setParams({ tab: 'contests' })}>all contests <span className="count">{contests.length}</span></button>
+        <button type="button" role="tab" aria-selected={tab === 'new'} className={`tab ${tab === 'new' ? 'on' : ''}`} onClick={() => setParams({ tab: 'new' })}>new contest</button>
+      </nav>
+
       <div className="with-side">
         <div className="stack">
-          <Box title="contests" flush>
+          {tab === 'live' ? <LiveRounds /> : null}
+          {tab === 'contests' ? <Box title="contests" flush>
             {contests.length === 0 ? <Empty title="No contests yet">Create one below.</Empty> : (
               <div style={{ overflowX: 'auto' }}>
                 <table>
@@ -218,9 +231,9 @@ export function Control() {
                 </table>
               </div>
             )}
-          </Box>
+          </Box> : null}
 
-          <Box title="new contest">
+          {tab === 'new' ? <Box title="new contest">
             <form onSubmit={create}>
               <div className="field-row">
                 <div><label htmlFor="title" style={{ marginTop: 0 }}>Title</label><input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required /></div>
@@ -282,7 +295,10 @@ export function Control() {
                       <label key={item.problemId} className={picked.includes(item.problemId) ? 'on' : ''}>
                         <input type="checkbox" checked={picked.includes(item.problemId)} onChange={() => toggle(item.problemId)} />
                         <span className="grow">{item.title}</span>
-                        {item.tags.map((tag) => <span key={tag} className="chip">{tag}</span>)}
+                        {item.tags.slice(0, 2).map((tag) => <span key={tag} className="chip">{tag}</span>)}
+                        {item.visibility === 'private'
+                          ? <span className="pill accent" title="Contest only: not in the problemset until a contest using it is published"><Lock size={11} /> private</span>
+                          : item.listed ? <span className="pill" title="Already in the problemset; it leaves the list while this contest runs">in problemset</span> : null}
                       </label>
                     ))}
                     {shownCatalog.length === 0 ? <Empty title="No published problems match" /> : null}
@@ -291,10 +307,18 @@ export function Control() {
               ) : null}
               <button className="btn primary" type="submit" disabled={busy} style={{ marginTop: 'var(--space-4)' }}><Plus size={14} /> {busy ? 'creating…' : startNow ? 'create and start' : 'create and open registration'}</button>
             </form>
-          </Box>
+          </Box> : null}
         </div>
 
         <aside className="side">
+          <Link to="/control/integrity" className="feature-card">
+            <Fingerprint size={22} />
+            <div>
+              <strong>Integrity review</strong>
+              <span>Compare accepted solutions, see the shared lines side by side, dismiss or confirm.</span>
+            </div>
+            <ArrowRight size={16} />
+          </Link>
           <Box title="quiz">
             {quizContests.length === 0 ? <p className="muted small" style={{ margin: 0 }}>No live quiz or mixed contest.</p> : (
               <div className="stack tight">
@@ -320,51 +344,6 @@ export function Control() {
               <button className="btn sm" type="submit" disabled={!rejudgeContest}>rejudge</button>
               <p className="muted small" style={{ margin: 0 }}>Finished submissions go back on the queue. The audit row stores the old verdicts and this reason.</p>
             </form>
-          </Box>
-          <Box title="integrity">
-            <div className="stack tight">
-              <select aria-label="Contest to check" value={integrityContest} onChange={(e) => { setIntegrityContest(e.target.value); setPairs([]); }}>
-                {contests.filter((c) => c.status !== 'cancelled').map((contest) => <option key={contest.id} value={contest.id}>{contest.title}</option>)}
-              </select>
-              <button className="btn sm" type="button" disabled={!integrityContest} onClick={() => {
-                setError('');
-                api<{ pairs: typeof pairs }>(`/api/contests/${integrityContest}/integrity/run`, { method: 'POST', body: '{}' })
-                  .then(() => api<{ pairs: typeof pairs }>(`/api/contests/${integrityContest}/integrity`))
-                  .then((report) => { setPairs(report.pairs); toast(`${report.pairs.length} similar pair(s)`, report.pairs.length ? 'warn' : 'ok'); })
-                  .catch((err) => setError(errorText(err)));
-              }}>run check</button>
-              <p className="muted small" style={{ margin: 0 }}>Compares the last accepted submission on each problem. A match is a review, never an automatic disqualification. Checks also run when a contest ends.</p>
-              {pairs.map((pair) => (
-                <div key={pair.id} className="stack tight" style={{ borderTop: '1px solid var(--line)', paddingTop: '0.4rem' }}>
-                  <span className="small">{pair.nameA} · {pair.nameB}</span>
-                  <span className="muted small">{pair.problem} · {Math.round(pair.score * 100)}%{pair.sameIp ? ' · same network' : ''} · {pair.status}</span>
-                  <div className="row">
-                    <button className="btn ghost sm" type="button" onClick={() => {
-                      api<typeof pair>(`/api/contests/${integrityContest}/integrity/pairs/${encodeURIComponent(pair.id)}`)
-                        .then((full) => setPairs((current) => current.map((row) => row.id === pair.id ? { ...row, ...full } : row)))
-                        .catch((err) => setError(errorText(err)));
-                    }}>view</button>
-                    <button className="btn sm" type="button" onClick={() => {
-                      api(`/api/contests/${integrityContest}/integrity/pairs/${encodeURIComponent(pair.id)}`, { method: 'POST', body: JSON.stringify({ decision: 'dismissed', note: '' }) })
-                        .then(() => setPairs((current) => current.map((row) => row.id === pair.id ? { ...row, status: 'dismissed' } : row)))
-                        .catch((err) => setError(errorText(err)));
-                    }}>dismiss</button>
-                    <button className="btn danger sm" type="button" onClick={() => {
-                      api(`/api/contests/${integrityContest}/integrity/pairs/${encodeURIComponent(pair.id)}`, { method: 'POST', body: JSON.stringify({ decision: 'confirmed', note: '' }) })
-                        .then(() => setPairs((current) => current.map((row) => row.id === pair.id ? { ...row, status: 'confirmed' } : row)))
-                        .catch((err) => setError(errorText(err)));
-                    }}>confirm</button>
-                  </div>
-                  {pair.codeA != null ? (
-                    <div className="two">
-                      {[pair.codeA, pair.codeB ?? ''].map((code, index) => (
-                        <pre key={index} className="small" style={{ margin: 0, overflow: 'auto', maxHeight: '12rem' }}>{code}</pre>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
           </Box>
           <Box title="lifecycle">
             <ol className="muted small" style={{ margin: 0, paddingLeft: '1.1rem', lineHeight: 1.9 }}>

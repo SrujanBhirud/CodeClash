@@ -1,3 +1,4 @@
+/** Password hashes, short-lived JWTs, and rotating refresh tokens. */
 import { hash, verify } from '@node-rs/argon2';
 import { type Role } from '@codeclash/shared';
 import { createHash, randomBytes } from 'node:crypto';

@@ -1,3 +1,4 @@
+/** Puts a submission on the Redis queue and writes a verdict only for the worker that claimed it. */
 import type { SourceLanguage } from '@codeclash/shared';
 import { type Db, ObjectId } from 'mongodb';
 import { HttpError } from './errors.js';

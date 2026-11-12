@@ -1,3 +1,4 @@
+/** Landing page. */
 import { ArrowRight, BadgeCheck, Radio, ShieldCheck, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';

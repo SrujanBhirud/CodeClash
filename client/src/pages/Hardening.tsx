@@ -1,4 +1,5 @@
-import { Bot, Check, Play, Square, X } from 'lucide-react';
+/** Shows a hardening run and holds proposals until the setter approves them. */
+import { ArrowRight, Bot, Check, Play, Square, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, isAbort } from '../api';
 import { Alert, Empty, errorText, toast } from '../ui';
@@ -73,6 +74,103 @@ function severity(m: Mutation) {
   return { label: 'low', tone: '' };
 }
 
+const PIPELINE = [
+  { name: 'Baseline', text: 'The reference must pass every current test.' },
+  { name: 'Mutate', text: 'Plant small bugs in the reference: < becomes <=, a literal moves by one, min becomes max, and so on.' },
+  { name: 'Attack', text: 'Boundary, random and max-size inputs from the input spec, plus model inputs aimed at each surviving mutant.' },
+  { name: 'Verify', text: 'Each input passes the spec validator; the reference runs on it in the sandbox to get the expected output.' },
+  { name: 'Propose', text: 'The fewest tests that kill the most survivors. Nothing changes until you approve.' },
+];
+
+function stageIndex(run: Run | null) {
+  if (!run) return -1;
+  if (run.status === 'completed') return PIPELINE.length;
+  const stage = run.stage ?? '';
+  if (stage.startsWith('baseline') || stage === 'starting') return 0;
+  if (stage.startsWith('mutants')) return 1;
+  if (stage.startsWith('ai plan') || stage.startsWith('attacks')) return 2;
+  if (stage.startsWith('reference') || stage.startsWith('ai feedback')) return 3;
+  if (stage.startsWith('proposals') || stage.startsWith('performance')) return 4;
+  return run.status === 'queued' ? -1 : 0;
+}
+
+function Pipeline({ run }: { run: Run | null }) {
+  const at = stageIndex(run);
+  const active = run ? ACTIVE.includes(run.status) : false;
+  return (
+    <ol className="pipeline" aria-label="Hardening stages">
+      {PIPELINE.map((step, index) => {
+        const state = index < at ? 'done' : index === at && active ? 'now' : '';
+        return (
+          <li key={step.name} className={state}>
+            <span className="dot">{state === 'done' ? <Check size={12} /> : index + 1}</span>
+            <strong>{step.name}</strong>
+            <span>{step.text}</span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+const MUTANT_TONE: Record<Mutation['status'], string> = { killed: 'ok', survived: 'bad', trivial: 'muted', equivalent: 'equiv', compile_error: 'muted' };
+const MUTANT_LABEL: Record<Mutation['status'], string> = { killed: 'killed', survived: 'survived', trivial: 'trivial', equivalent: 'likely equivalent', compile_error: 'did not compile' };
+
+function MutantMap({ mutations }: { mutations: Mutation[] }) {
+  const [open, setOpen] = useState<string | null>(null);
+  const shown = mutations.find((m) => m.id === open) ?? null;
+  const counts = mutations.reduce<Record<string, number>>((acc, m) => ({ ...acc, [m.status]: (acc[m.status] ?? 0) + 1 }), {});
+  return (
+    <div className="mutant-map">
+      <div className="legend">
+        {(Object.keys(MUTANT_LABEL) as Mutation['status'][]).filter((s) => counts[s]).map((s) => (
+          <span key={s}><i className={`tile-dot ${MUTANT_TONE[s]}`} /> {MUTANT_LABEL[s]} {counts[s]}</span>
+        ))}
+      </div>
+      <div className="tiles">
+        {mutations.map((m) => (
+          <button
+            key={m.id}
+            type="button"
+            className={`tile ${MUTANT_TONE[m.status]} ${open === m.id ? 'on' : ''} ${m.killedByProposalId ? 'caught' : ''}`}
+            title={`${m.key} · ${m.operator} · ${MUTANT_LABEL[m.status]}${m.diff ? ` · line ${m.diff.line}` : ''}`}
+            onClick={() => setOpen(open === m.id ? null : m.id)}
+          >{m.key.replace(/^m/i, '')}</button>
+        ))}
+      </div>
+      {shown ? (
+        <div className="mutant">
+          <div className="mutant-head">
+            <strong className="num">{shown.key}</strong>
+            <span className="muted small">{shown.operator}{shown.diff ? ` · line ${shown.diff.line}` : ''}</span>
+            <span className={`pill ${shown.status === 'killed' ? 'ok' : shown.status === 'survived' ? 'bad' : ''}`}>{MUTANT_LABEL[shown.status]}</span>
+          </div>
+          {shown.diff ? <pre className="diff"><span className="del">- {shown.diff.original}</span>{'\n'}<span className="add">+ {shown.diff.mutated}</span></pre> : <p className="small">{shown.description}</p>}
+        </div>
+      ) : <p className="muted small" style={{ margin: 0 }}>Click a tile to see the change it made.</p>}
+    </div>
+  );
+}
+
+function ScoreMove({ before, after }: { before: number | null; after: number | null }) {
+  const pct = (v: number | null) => Math.round((v ?? 0) * 100);
+  return (
+    <div className="score-move">
+      <div>
+        <span className="label">mutation score now</span>
+        <b>{percent(before)}</b>
+        <div className="bar"><span style={{ width: `${pct(before)}%` }} /></div>
+      </div>
+      <ArrowRight size={18} className="muted" />
+      <div>
+        <span className="label">after approving the proposals</span>
+        <b className={after !== null && before !== null && after > before ? 'ok' : ''}>{percent(after)}</b>
+        <div className="bar ok"><span style={{ width: `${pct(after)}%` }} /></div>
+      </div>
+    </div>
+  );
+}
+
 function EvidenceBlock({ title, run }: { title: string; run?: Evidence }) {
   if (!run) return null;
   return (
@@ -84,10 +182,12 @@ function EvidenceBlock({ title, run }: { title: string; run?: Evidence }) {
   );
 }
 
-export function Hardening({ problemId, versionId, hasReference, startRequest, onStartHandled, onApproved, onDraftSpec }: {
+export function Hardening({ problemId, versionId, hasReference, startRequest, onStartHandled, onApproved, onDraftSpec, beforeStart }: {
   problemId: string;
   versionId: string;
   hasReference: boolean;
+  /** Runs before a run is queued, for example to save edits; false stops the run. */
+  beforeStart?: () => Promise<boolean>;
   /** Non-zero when the toolbar button asked for a run; reset through onStartHandled so a remount does not start another. */
   startRequest: number;
   onStartHandled: () => void;
@@ -148,6 +248,7 @@ export function Hardening({ problemId, versionId, hasReference, startRequest, on
 
   const start = useCallback(async () => {
     setError('');
+    if (beforeStart && !(await beforeStart())) return;
     setBusy('start');
     try {
       const started = await api<{ runId: string }>(`/api/problem-versions/${versionId}/hardening-runs`, { method: 'POST' });
@@ -159,7 +260,7 @@ export function Hardening({ problemId, versionId, hasReference, startRequest, on
     } finally {
       setBusy('');
     }
-  }, [versionId, loadRun, loadRuns]);
+  }, [versionId, loadRun, loadRuns, beforeStart]);
 
   useEffect(() => {
     if (startRequest === 0) { handled.current = 0; return; }
@@ -252,12 +353,33 @@ export function Hardening({ problemId, versionId, hasReference, startRequest, on
         </div>
       </div>
 
+      <Pipeline run={run} />
+
+      <details className="harden-guide" open={!run}>
+        <summary>How to use test hardening</summary>
+        <div className="two">
+          <ol>
+            <li>Save a reference solution and your tests. An input spec on the Tests step makes the attacks much sharper.</li>
+            <li>Run hardening. It takes about a minute; you can leave the page.</li>
+            <li>Read the surviving mutants: each is a believable bug your tests would accept.</li>
+            <li>Approve the proposals you agree with. They go into this draft as hidden tests or wrong solutions.</li>
+            <li>Run the publish check to ship the stronger version.</li>
+          </ol>
+          <dl>
+            <dt>mutant</dt><dd>a copy of the reference with one small change</dd>
+            <dt>killed</dt><dd>some test fails it, so the suite would catch that bug</dd>
+            <dt>survived</dt><dd>every test passes it: a hole in the suite</dd>
+            <dt>trivial</dt><dd>the samples already fail it; not counted</dd>
+            <dt>likely equivalent</dt><dd>no input found that tells it apart from the reference</dd>
+            <dt>mutation score</dt><dd>killed ÷ counted mutants</dd>
+          </dl>
+        </div>
+      </details>
+
       {!run ? (
         <div className="table-wrap">
           <Empty icon={<Bot size={28} />} title="No hardening runs yet">
-            {hasReference
-              ? 'A run mutates the reference, attacks it with boundary, random, and max-size inputs, and proposes the tests that catch what the suite misses.'
-              : 'Add a reference solution first.'}
+            {hasReference ? 'Press run hardening to measure how strong these tests are.' : 'Add a reference solution and at least one test first.'}
           </Empty>
         </div>
       ) : null}
@@ -280,9 +402,9 @@ export function Hardening({ problemId, versionId, hasReference, startRequest, on
             <div className="stat"><span className="stat-value">{metrics.mutants.killed}</span><span className="stat-label">killed</span></div>
             <div className="stat"><span className="stat-value">{metrics.mutants.survived}</span><span className="stat-label">survived</span></div>
             <div className="stat"><span className="stat-value">{metrics.mutants.equivalent}</span><span className="stat-label">likely equivalent</span></div>
-            <div className="stat strong"><span className="stat-value">{percent(metrics.score)}</span><span className="stat-label">mutation score</span></div>
-            <div className="stat"><span className="stat-value">{percent(metrics.projectedScore)}</span><span className="stat-label">after approval</span></div>
+            <div className="stat"><span className="stat-value">{metrics.mutants.trivial}</span><span className="stat-label">trivial</span></div>
           </section>
+          <ScoreMove before={metrics.score} after={metrics.projectedScore} />
           <p className="muted small harden-foot">
             Score = killed ÷ (generated − trivial − likely equivalent − compile errors). {metrics.mutants.trivial} trivial mutant(s) failed the samples and {metrics.mutants.compileErrors} did not compile; neither counts.
             {' '}Reference passes {metrics.baseline.passed}/{metrics.baseline.total} current tests.
@@ -319,6 +441,13 @@ export function Hardening({ problemId, versionId, hasReference, startRequest, on
               ) : <p className="muted small">Not checked: needs an input spec and a reference that handles the maximum input.</p>}
             </div>
           </div>
+
+          {run && run.mutations.length > 0 ? (
+            <>
+              <p className="section-title">Every mutant <span className="muted small">· {run.mutations.length} planted bugs and what the current tests did to them</span></p>
+              <MutantMap mutations={run.mutations} />
+            </>
+          ) : null}
 
           <p className="section-title">Surviving mutants <span className="muted small">· bugs the current tests do not catch</span></p>
           {survivors.length === 0 ? <p className="muted small">None. Every counted mutant is killed by the current tests.</p> : (

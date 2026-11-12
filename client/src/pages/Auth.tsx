@@ -1,3 +1,4 @@
+/** Sign up, sign in, and the six-digit confirmation form. */
 import { ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -11,8 +12,8 @@ export function VerifyEmail({ onSession }: { onSession: (session: Session) => vo
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (token.length < 10) {
-      setError('This confirmation link is missing its token.');
+    if (!/^\d{6}$/.test(token)) {
+      setError('This confirmation link does not contain a 6-digit code.');
       return;
     }
     let cancelled = false;
@@ -47,6 +48,7 @@ export function Auth({ onSession }: { onSession: (session: Session) => void }) {
   const [mode, setMode] = useState<'login' | 'register' | 'verify'>(pending?.user.emailVerified === false ? 'verify' : 'login');
   const [token, setToken] = useState('');
   const [mailed, setMailed] = useState(true);
+  const [localInbox, setLocalInbox] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
@@ -57,8 +59,11 @@ export function Auth({ onSession }: { onSession: (session: Session) => void }) {
   const [email, setEmail] = useState('');
 
   useEffect(() => {
-    if (mode !== 'verify' || email) return;
-    api<{ email: string }>('/api/me').then((me) => setEmail(me.email)).catch(() => {});
+    if (mode !== 'verify') return;
+    api<{ email: string; localInbox?: string }>('/api/me').then((me) => {
+      if (!email) setEmail(me.email);
+      if (me.localInbox) setLocalInbox(me.localInbox);
+    }).catch(() => {});
   }, [mode, email]);
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -74,17 +79,18 @@ export function Auth({ onSession }: { onSession: (session: Session) => void }) {
     setBusy(true);
     try {
       const path = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
-      const result = await api<Session & { verifyToken?: string; mailed?: boolean }>(path, {
+      const result = await api<Session & { verifyToken?: string; mailed?: boolean; localInbox?: string }>(path, {
         method: 'POST',
         body: JSON.stringify(mode === 'login' ? { email, password } : { email, password, displayName }),
       });
-      const { verifyToken: shown, mailed: didMail, ...session } = result;
+      const { verifyToken: shown, mailed: didMail, localInbox: inbox, ...session } = result;
       onSession(session);
       if (session.user.emailVerified === false) {
         setMailed(didMail !== false);
+        setLocalInbox(inbox ?? null);
         setToken(didMail === false ? shown ?? '' : '');
         setMode('verify');
-        toast(didMail === false ? 'Mail is not configured, so the token is shown here' : 'Check your inbox to confirm your email', 'warn');
+        toast(inbox ? 'The code is in the local inbox on this PC' : didMail === false ? 'Mail could not be sent, so the code is shown here' : 'Check your email for the 6-digit code', 'warn');
         return;
       }
       toast(`Welcome${session.user.displayName ? `, ${session.user.displayName}` : ''}`, 'ok');
@@ -121,9 +127,11 @@ export function Auth({ onSession }: { onSession: (session: Session) => void }) {
           <>
             <h1>Enter your code</h1>
             <p className="muted small">
-              {mailed
-                ? `A 6-digit code was sent to ${email || 'your email'}. It expires in 15 minutes.`
-                : 'Mail could not be sent from this machine, so the code is shown here.'}
+              {localInbox
+                ? <>The code for {email || 'this address'} is in the local inbox, not in Gmail. Open <a href={localInbox}>{localInbox}</a>. It expires in 15 minutes.</>
+                : mailed
+                  ? `A 6-digit code was sent to ${email || 'your email'}. It expires in 15 minutes.`
+                  : 'Mail could not be sent from this machine, so the code is shown here.'}
             </p>
             <form onSubmit={confirm}>
               <label htmlFor="token">Confirmation code</label>
@@ -131,12 +139,13 @@ export function Auth({ onSession }: { onSession: (session: Session) => void }) {
               {pending ? (
                 <button className="btn" type="button" disabled={busy || cooldown > 0} style={{ marginTop: 'var(--space-3)' }} onClick={() => {
                   setBusy(true);
-                  api<{ mailed?: boolean; verifyToken?: string }>('/api/auth/verify/resend', { method: 'POST', body: '{}' })
+                  api<{ mailed?: boolean; verifyToken?: string; localInbox?: string }>('/api/auth/verify/resend', { method: 'POST', body: '{}' })
                     .then((sent) => {
                       setMailed(sent.mailed !== false);
+                      setLocalInbox(sent.localInbox ?? null);
                       if (sent.mailed === false) setToken(sent.verifyToken ?? '');
                       setCooldown(60);
-                      toast('Confirmation email sent again', 'ok');
+                      toast(sent.localInbox ? 'The new code is in the local inbox' : 'Confirmation email sent again', 'ok');
                     })
                     .catch((err) => setError(errorText(err)))
                     .finally(() => setBusy(false));

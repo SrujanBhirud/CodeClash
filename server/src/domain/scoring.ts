@@ -1,3 +1,4 @@
+/** Standings for ICPC, quiz, and IOI, including the first-solve bonus. */
 import { compareStanding, icpcRow, problemCells, type ProblemCell, type StandingRow, type Verdict } from '@codeclash/shared';
 import { type Db, ObjectId } from 'mongodb';
 

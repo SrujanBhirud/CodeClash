@@ -1,3 +1,4 @@
+/** Contest list: open, live, and finished. */
 import { ArrowRight, CalendarClock, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';

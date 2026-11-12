@@ -1,3 +1,4 @@
+/** Hardening steps: baseline, mutants, attacks, then a small set of proposals. */
 import { sameOutput } from '@codeclash/judge/decide';
 import {
   BOUNDARY_CLASSES, boundaryInputs, defaultLimit, inputClasses, inputSize, maxScaleInput, randomInput, seededRng,

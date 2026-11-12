@@ -1,3 +1,4 @@
+/** One contest: seat, problems, standings, and the editor. */
 import { ArrowLeft, Check, Clock, List, Lock, Snowflake, Trophy, UserPlus, Users, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
@@ -5,7 +6,7 @@ import { io } from 'socket.io-client';
 import { api } from '../api';
 import { CodePanel, ProblemView, type Limits } from '../problem';
 import {
-  Alert, Empty, errorText, formatLeft, formatWhen, LANGUAGES, letter, StatusPill, toast, useLanguage, useNow, VerdictText,
+  Alert, Empty, errorText, formatLeft, formatWhen, LANGUAGES, letter, newIdempotencyKey, StatusPill, toast, useLanguage, useNow, VerdictText,
 } from '../ui';
 
 interface Cell { solved: boolean; tries: number; minute: number | null }
@@ -180,7 +181,7 @@ export function ContestRoom({ me }: { me: string | null }) {
         ) : <div className="clock-block"><p className="label">contest is over</p><div className="clock muted">final</div></div>}
         <div className="seat-line">
           {!me ? (
-            <><Link className="btn primary sm" to="/auth" state={{ from: `/arena/${id}` }}><UserPlus size={14} /> sign in to register</Link><span className="muted small">You can read the standings without an account.</span></>
+            <><Link className="btn primary sm" to="/auth" state={{ from: `/arena/${id}` }}><UserPlus size={14} /> sign in to register</Link></>
           ) : seat && hasSeat ? (
             <>
               <span className="pill ok"><Check size={12} /> {seat.status === 'competing' ? 'competing' : 'registered'}</span>
@@ -313,7 +314,7 @@ export function ContestRoom({ me }: { me: string | null }) {
               submit={async (lang, code) => {
                 const result = await api<{ id: string }>(`/api/contests/${id}/submissions`, {
                   method: 'POST',
-                  headers: { 'idempotency-key': crypto.randomUUID() },
+                  headers: { 'idempotency-key': newIdempotencyKey() },
                   body: JSON.stringify({ problemVersionId: problem.versionId, language: lang, code }),
                 });
                 void loadMine();

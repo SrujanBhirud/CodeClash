@@ -5,7 +5,7 @@ import { ensureIndexes } from '../db/indexes.js';
 import { tickContests, transitionContest } from './contests.js';
 import { HttpError } from './errors.js';
 import { claimSubmission, commitVerdict, enqueueSubmission, latestPublished, publishedVersions, reclaimSubmission } from './judging.js';
-import { applyPublishReport, assertArchiveAccess, publishDecision, runPublishCheck, testsFromZip, approveProposal, approveProposals } from './problems.js';
+import { applyPublishReport, assertArchiveAccess, listedInArchive, publishDecision, runPublishCheck, testsFromZip, approveProposal, approveProposals } from './problems.js';
 import { reserveSeat, seatInvariants, withdrawSeat } from './registration.js';
 import { awardFirstSolve, dispatchOutbox, leaderboard, recomputeStanding } from './scoring.js';
 import AdmZip from 'adm-zip';
@@ -239,6 +239,16 @@ describe('problems', () => {
       scoringMode: 'icpc',
     });
     await expect(assertArchiveAccess(db, String(problem.insertedId))).rejects.toMatchObject({ status: 403 });
+  });
+
+  it('lists a private problem only after a contest using it publishes', () => {
+    expect(listedInArchive('public', [])).toBe(true);
+    expect(listedInArchive('private', [])).toBe(false);
+    expect(listedInArchive('private', ['running'])).toBe(false);
+    expect(listedInArchive('private', ['published'])).toBe(true);
+    expect(listedInArchive('public', ['published', 'registration_open'])).toBe(false);
+    expect(listedInArchive('public', ['cancelled'])).toBe(true);
+    expect(listedInArchive('private', ['cancelled'])).toBe(false);
   });
 
   it('reads paired .in and .out files from a zip', () => {

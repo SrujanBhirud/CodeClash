@@ -1,3 +1,4 @@
+/** Renders a statement, samples, and the editor panel. */
 import { BookOpen, FileUp, RotateCcw, Send } from 'lucide-react';
 import { Fragment, useRef, useState, type ReactNode } from 'react';
 import {
@@ -259,7 +260,7 @@ export function CodePanel({ draftKey, submit, run, blocked, label, onJudged, onL
             </button>
           </span>
         </div>
-        {samples ? <p className="muted small" style={{ margin: 0 }} role="status">{samples}. Nothing was recorded.</p> : null}
+        {samples ? <p className="muted small" style={{ margin: 0 }} role="status">{samples}</p> : null}
         {error ? <div className="alert bad" style={{ margin: 0 }}>{error}</div> : null}
         <VerdictCard row={verdict} />
       </div>

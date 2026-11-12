@@ -1,3 +1,4 @@
+/** Problem versions, test zips, the publish check, and approving hardening proposals. */
 import type { SourceLanguage } from '@codeclash/shared';
 import AdmZip from 'adm-zip';
 import { type Db, ObjectId } from 'mongodb';
@@ -15,17 +16,54 @@ export interface RunCaseInput {
 
 export type RunCase = (input: RunCaseInput) => Promise<{ verdict: string; stdout: string }>;
 
+export type Visibility = 'public' | 'private';
+
+export function visibilityOf(problem: Record<string, unknown> | null | undefined): Visibility {
+  return problem?.visibility === 'private' ? 'private' : 'public';
+}
+
+/**
+ * Public problems are listed once published. Private problems are listed only after a contest using them publishes.
+ * A contest that has not published yet (and is not cancelled) keeps either kind out of the problemset.
+ */
+export function listedInArchive(visibility: Visibility, contestStatuses: string[]) {
+  const live = contestStatuses.filter((status) => status !== 'cancelled');
+  if (live.some((status) => status !== 'published')) return false;
+  return visibility === 'public' || live.includes('published');
+}
+
+/** Which contests use each problem, and which problems are private. Two queries for the whole set. */
+export async function archiveState(db: Db) {
+  const [contests, privateRows] = await Promise.all([
+    db.collection('contests').find({ 'problemIds.0': { $exists: true } }).project({ problemIds: 1, status: 1 }).toArray(),
+    db.collection('problems').find({ visibility: 'private' }).project({ _id: 1 }).toArray(),
+  ]);
+  const statuses = new Map<string, string[]>();
+  for (const contest of contests) {
+    for (const id of (contest.problemIds as ObjectId[]) ?? []) {
+      const list = statuses.get(String(id)) ?? [];
+      list.push(String(contest.status));
+      statuses.set(String(id), list);
+    }
+  }
+  const privateIds = new Set(privateRows.map((row) => String(row._id)));
+  return {
+    visibility: (problemId: string): Visibility => (privateIds.has(problemId) ? 'private' : 'public'),
+    listed: (problemId: string) => listedInArchive(privateIds.has(problemId) ? 'private' : 'public', statuses.get(problemId) ?? []),
+  };
+}
+
 export async function archiveVisible(db: Db, problemId: ObjectId): Promise<boolean> {
-  const hidden = await db.collection('contests').findOne({
-    problemIds: problemId,
-    status: { $ne: 'published' },
-  });
-  return !hidden;
+  const [problem, contests] = await Promise.all([
+    db.collection('problems').findOne({ _id: problemId }, { projection: { visibility: 1 } }),
+    db.collection('contests').find({ problemIds: problemId }).project({ status: 1 }).toArray(),
+  ]);
+  return listedInArchive(visibilityOf(problem), contests.map((contest) => String(contest.status)));
 }
 
 export async function assertArchiveAccess(db: Db, problemId: string) {
   const ok = await archiveVisible(db, new ObjectId(problemId));
-  if (!ok) throw new HttpError(403, 'This problem belongs to a contest that is not published');
+  if (!ok) throw new HttpError(403, 'This problem is not in the problemset');
 }
 
 export interface PublishReport {

@@ -14,13 +14,15 @@ import { HttpError, isDuplicateKey } from '../domain/errors.js';
 import { enqueueSubmission, latestPublished, publishedVersions } from '../domain/judging.js';
 import { HARDEN_STREAM } from '@codeclash/agent/worker';
 import { providerFromEnv } from '@codeclash/agent/providers';
-import { approveProposals, assertArchiveAccess, runPublishCheck, testsFromZip, type RunCase } from '../domain/problems.js';
+import {
+  approveProposals, archiveState, assertArchiveAccess, listedInArchive, runPublishCheck, testsFromZip, visibilityOf, type RunCase,
+} from '../domain/problems.js';
 import { reserveSeat, withdrawSeat } from '../domain/registration.js';
 import { leaderboard } from '../domain/scoring.js';
 import { checkPassword, hashPassword, issueRefresh, readAccess, revokeRefresh, rotateRefresh, signAccess } from './auth.js';
 import { assertVerified, newVerifyToken, publicUser, rejudgeSubmissions, runSamples, solveRecord, verifyEmail } from '../domain/product.js';
-import { hashIp, runSimilarity } from '../domain/similarity.js';
-import { sendVerificationEmail } from '../mail.js';
+import { hashIp, runSimilarity, sharedLines } from '../domain/similarity.js';
+import { localInbox, sendVerificationEmail } from '../mail.js';
 
 export interface AppDeps {
   db: Db;
@@ -180,11 +182,13 @@ export function createApp(deps: AppDeps) {
       const access = signAccess({ id, role: 'participant' });
       const refresh = await issueRefresh(db, id);
       const mailed = await sendVerificationEmail(body.email.toLowerCase(), verify.token);
+      const inbox = localInbox();
       res.status(201).json({
         access,
         refresh,
         user: { id, role: 'participant', displayName: body.displayName, emailVerified: false, rating: 1200 },
         mailed,
+        ...(inbox ? { localInbox: inbox } : {}),
         ...(!mailed && process.env.NODE_ENV !== 'production' ? { verifyToken: verify.token } : {}),
       });
     } catch (error) {
@@ -232,9 +236,11 @@ export function createApp(deps: AppDeps) {
       { $set: { verifyTokenHash: verify.tokenHash, verifyExpires: verify.expiresAt } },
     );
     const mailed = await sendVerificationEmail(String(existing.email), verify.token);
+    const inbox = localInbox();
     res.json({
       sent: true,
       mailed,
+      ...(inbox ? { localInbox: inbox } : {}),
       ...(!mailed && process.env.NODE_ENV !== 'production' ? { verifyToken: verify.token } : {}),
     });
   }));
@@ -256,7 +262,8 @@ export function createApp(deps: AppDeps) {
     if (!doc) throw new HttpError(401, 'User no longer exists');
     const profile = publicUser({ ...doc, _id: doc._id, role: doc.role as Role, displayName: doc.displayName as string });
     const record = await solveRecord(db, user.sub);
-    res.json({ ...profile, email: doc.email, streak: record.streak, days: record.days });
+    const inbox = localInbox();
+    res.json({ ...profile, email: doc.email, streak: record.streak, days: record.days, ...(inbox ? { localInbox: inbox } : {}) });
   }));
 
   app.patch('/api/me', asyncRoute(async (req, res) => {
@@ -383,8 +390,15 @@ export function createApp(deps: AppDeps) {
 
   app.get('/api/catalog', asyncRoute(async (req, res) => {
     requireRole(req, STAFF);
-    const versions = await publishedVersions(db);
-    res.json(versions.map((v) => ({ problemId: String(v.problemId), versionId: String(v._id), title: v.title, tags: v.tags ?? [] })));
+    const [versions, state] = await Promise.all([publishedVersions(db), archiveState(db)]);
+    res.json(versions.map((v) => ({
+      problemId: String(v.problemId),
+      versionId: String(v._id),
+      title: v.title,
+      tags: v.tags ?? [],
+      visibility: state.visibility(String(v.problemId)),
+      listed: state.listed(String(v.problemId)),
+    })));
   }));
 
   app.get('/api/contests', asyncRoute(async (_req, res) => {
@@ -401,6 +415,69 @@ export function createApp(deps: AppDeps) {
       freezeAt: c.freezeAt,
       endsAt: c.endsAt,
     })));
+  }));
+
+  /** Running and frozen contests with their judging traffic, for the staff live view. */
+  app.get('/api/control/live', asyncRoute(async (req, res) => {
+    const viewer = requireRole(req, STAFF);
+    const contests = await db.collection('contests').find({ status: { $in: ['running', 'frozen'] } }).sort({ endsAt: 1 }).toArray();
+    const ids = contests.map((contest) => contest._id);
+    const since = new Date(Date.now() - 5 * 60_000);
+    const [traffic, seated, titles] = await Promise.all([
+      ids.length ? db.collection('submissions').aggregate([
+        { $match: { contestId: { $in: ids } } },
+        {
+          $group: {
+            _id: { contestId: '$contestId', problemId: '$problemId' },
+            total: { $sum: 1 },
+            accepted: { $sum: { $cond: [{ $eq: ['$verdict', 'AC'] }, 1, 0] } },
+            pending: { $sum: { $cond: [{ $eq: ['$verdict', null] }, 1, 0] } },
+            recent: { $sum: { $cond: [{ $gte: ['$submittedAt', since] }, 1, 0] } },
+            last: { $max: '$submittedAt' },
+          },
+        },
+      ]).toArray() : [],
+      ids.length ? db.collection('seats').aggregate([
+        { $match: { contestId: { $in: ids }, active: true } },
+        { $group: { _id: { contestId: '$contestId', status: '$status' }, n: { $sum: 1 } } },
+      ]).toArray() : [],
+      publishedVersions(db, [...new Set(contests.flatMap((c) => ((c.problemIds as ObjectId[]) ?? []).map(String)))].map((id) => new ObjectId(id))),
+    ]);
+    const titleOf = new Map(titles.map((v) => [String(v.problemId), String(v.title)]));
+    const reveal = viewer.role === 'organiser' || viewer.role === 'admin';
+    const rows = await Promise.all(contests.map(async (contest) => {
+      const key = String(contest._id);
+      const mine = traffic.filter((row) => String((row._id as { contestId: ObjectId }).contestId) === key);
+      const seats = seated.filter((row) => String((row._id as { contestId: ObjectId }).contestId) === key);
+      const seatCount = (status: string) => seats.filter((row) => (row._id as { status: string }).status === status).reduce((sum, row) => sum + (row.n as number), 0);
+      const board = await leaderboard(db, key, { reveal });
+      const sum = (field: string) => mine.reduce((total, row) => total + ((row[field] as number) ?? 0), 0);
+      const last = mine.reduce<Date | null>((latest, row) => (!latest || (row.last as Date) > latest ? (row.last as Date) : latest), null);
+      return {
+        id: key,
+        title: contest.title,
+        type: contest.type,
+        status: contest.status,
+        scoringMode: contest.scoringMode,
+        startsAt: contest.startsAt,
+        freezeAt: contest.freezeAt,
+        endsAt: contest.endsAt,
+        capacity: contest.capacity,
+        competing: seatCount('competing') + seatCount('reserved'),
+        waitlisted: seatCount('waitlisted'),
+        submissions: sum('total'),
+        accepted: sum('accepted'),
+        pending: sum('pending'),
+        lastFiveMinutes: sum('recent'),
+        lastSubmissionAt: last,
+        problems: ((contest.problemIds as ObjectId[]) ?? []).map((id) => {
+          const row = mine.find((item) => String((item._id as { problemId: ObjectId }).problemId) === String(id));
+          return { problemId: String(id), title: titleOf.get(String(id)) ?? 'problem', attempts: (row?.total as number) ?? 0, accepted: (row?.accepted as number) ?? 0 };
+        }),
+        leaders: board.slice(0, 3).map((row) => ({ displayName: row.displayName, solved: row.solved, penalty: row.penalty, points: row.points ?? null })),
+      };
+    }));
+    res.json({ serverNow: new Date().toISOString(), contests: rows });
   }));
 
   app.post('/api/contests/:id/seats', asyncRoute(async (req, res) => {
@@ -426,12 +503,14 @@ export function createApp(deps: AppDeps) {
       editorial: z.string().default(''),
       tags: z.array(z.string()).default([]),
       difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
+      visibility: z.enum(['public', 'private']).default('public'),
     }).parse(req.body);
-    const problem = await db.collection('problems').insertOne({ ...body, createdBy: new ObjectId(user.sub), createdAt: new Date() });
+    const { visibility, ...fields } = body;
+    const problem = await db.collection('problems').insertOne({ ...fields, visibility, createdBy: new ObjectId(user.sub), createdAt: new Date() });
     const version = await db.collection('problem_versions').insertOne({
       problemId: problem.insertedId,
       version: 1,
-      ...body,
+      ...fields,
       limits: defaultLimits(),
       subtasks: [],
       tests: [],
@@ -452,14 +531,50 @@ export function createApp(deps: AppDeps) {
       { $replaceRoot: { newRoot: '$doc' } },
       { $sort: { title: 1 } },
     ]).toArray();
+    const [state, published] = await Promise.all([
+      archiveState(db),
+      db.collection('problem_versions').distinct('problemId', { status: 'published' }),
+    ]);
+    const hasPublished = new Set(published.map(String));
     res.json(rows.map((v) => ({
       problemId: String(v.problemId),
       versionId: String(v._id),
       version: v.version,
       title: v.title,
       status: v.status,
+      visibility: state.visibility(String(v.problemId)),
+      listed: hasPublished.has(String(v.problemId)) && state.listed(String(v.problemId)),
     })));
   }));
+
+  app.put('/api/problems/:id/visibility', asyncRoute(async (req, res) => {
+    const user = requireRole(req, ['setter', 'admin']);
+    const body = z.object({ visibility: z.enum(['public', 'private']) }).parse(req.body);
+    const before = await db.collection('problems').findOneAndUpdate(
+      { _id: new ObjectId(req.params.id) },
+      { $set: { visibility: body.visibility } },
+      { projection: { visibility: 1 } },
+    );
+    if (!before) throw new HttpError(404, 'Problem not found');
+    await audit(db, user.sub, 'problem.visibility', req.params.id, 'allow', { before: visibilityOf(before), after: body.visibility });
+    res.json(await problemUsage(String(req.params.id)));
+  }));
+
+  /** Where a problem is used, and whether the problemset shows it now. */
+  async function problemUsage(problemId: string) {
+    const id = new ObjectId(problemId);
+    const [problem, contests, published] = await Promise.all([
+      db.collection('problems').findOne({ _id: id }, { projection: { visibility: 1 } }),
+      db.collection('contests').find({ problemIds: id }).project({ title: 1, status: 1, startsAt: 1 }).sort({ startsAt: -1 }).toArray(),
+      db.collection('problem_versions').countDocuments({ problemId: id, status: 'published' }, { limit: 1 }),
+    ]);
+    const visibility = visibilityOf(problem);
+    return {
+      visibility,
+      listed: published > 0 && listedInArchive(visibility, contests.map((c) => String(c.status))),
+      usedIn: contests.map((c) => ({ id: String(c._id), title: c.title, status: c.status, startsAt: c.startsAt })),
+    };
+  }
 
   app.post('/api/problems/:id/versions', asyncRoute(async (req, res) => {
     requireRole(req, ['setter', 'admin']);
@@ -518,6 +633,7 @@ export function createApp(deps: AppDeps) {
       source: version.source ?? null,
       status: version.status,
       report: version.report ?? [],
+      ...(await problemUsage(String(version.problemId))),
     });
   }));
 
@@ -757,6 +873,7 @@ export function createApp(deps: AppDeps) {
     await audit(db, user.sub, 'integrity.view', req.params.id, 'allow', { reason: `${pairs.length} pairs` });
     res.json({
       updatedAt: report?.updatedAt ?? null,
+      checked: report?.checked ?? null,
       pairs: pairs.map((pair) => ({
         ...pair,
         nameA: names.get(pair.userA) ?? pair.userA,
@@ -781,19 +898,23 @@ export function createApp(deps: AppDeps) {
       db.collection('submissions').findOne({ _id: new ObjectId(pair.submissionB) }, { projection: { code: 1, language: 1 } }),
     ]);
     await audit(db, user.sub, 'integrity.view_code', req.params.pairId, 'allow', { reason: req.params.id });
-    res.json({ ...pair, codeA: a?.code ?? '', codeB: b?.code ?? '', languageA: a?.language ?? '', languageB: b?.language ?? '' });
+    const codeA = String(a?.code ?? '');
+    const codeB = String(b?.code ?? '');
+    res.json({ ...pair, codeA, codeB, languageA: a?.language ?? '', languageB: b?.language ?? '', shared: sharedLines(codeA, codeB) });
   }));
 
   app.post('/api/contests/:id/integrity/pairs/:pairId', asyncRoute(async (req, res) => {
     const user = requireRole(req, ['organiser', 'admin']);
-    const body = z.object({ decision: z.enum(['dismissed', 'confirmed']), note: z.string().max(500).default('') }).parse(req.body);
+    const body = z.object({ decision: z.enum(['open', 'dismissed', 'confirmed']), note: z.string().max(500).default('') }).parse(req.body);
+    const me = await db.collection('users').findOne({ _id: new ObjectId(user.sub) }, { projection: { displayName: 1 } });
+    const decidedAt = new Date();
     const updated = await db.collection('similarity_reports').updateOne(
       { contestId: new ObjectId(req.params.id), 'pairs.id': req.params.pairId },
-      { $set: { 'pairs.$.status': body.decision, 'pairs.$.note': body.note } },
+      { $set: { 'pairs.$.status': body.decision, 'pairs.$.note': body.note, 'pairs.$.decidedAt': decidedAt, 'pairs.$.decidedBy': me?.displayName ?? user.sub } },
     );
     if (updated.matchedCount === 0) throw new HttpError(404, 'Pair not found');
-    await audit(db, user.sub, 'integrity.decision', req.params.pairId, body.decision, { reason: body.note });
-    res.json({ status: body.decision });
+    await audit(db, user.sub, 'integrity.decision', req.params.pairId, body.decision === 'open' ? 'reopened' : body.decision, { reason: body.note });
+    res.json({ status: body.decision, decidedAt, decidedBy: me?.displayName ?? null });
   }));
 
   app.post('/api/run', asyncRoute(async (req, res) => {
@@ -1121,7 +1242,11 @@ export function createApp(deps: AppDeps) {
 
   app.get('/api/agent/status', asyncRoute(async (req, res) => {
     requireRole(req, ['setter', 'admin']);
-    const config = providerFromEnv();
+    const worker = await db.collection<{ _id: string; status: string; provider: string | null; model: string | null; reason: string | null; seenAt: Date }>('service_status').findOne({ _id: 'agent' });
+    const own = providerFromEnv();
+    const config = worker && worker.seenAt.getTime() > Date.now() - 3 * 60_000
+      ? { status: worker.status, provider: worker.provider ? { name: worker.provider, model: worker.model } : null, reason: worker.reason }
+      : own;
     const start = new Date();
     start.setDate(1);
     start.setHours(0, 0, 0, 0);
@@ -1267,18 +1392,17 @@ function tagsByUse(rows: ArchiveRow[]) {
   return [...uses.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([tag]) => tag);
 }
 
-/** Latest published version of every problem not held by an unpublished contest, with stats, in three queries. */
+/** Latest published version of every problem the problemset lists, with stats. */
 async function archiveRows(db: Db, viewerId: string | null): Promise<ArchiveRow[]> {
-  const [versions, held] = await Promise.all([
+  const [versions, state] = await Promise.all([
     db.collection('problem_versions').aggregate([
       { $match: { status: 'published' } },
       { $sort: { version: -1 } },
       { $group: { _id: '$problemId', doc: { $first: { _id: '$_id', title: '$title', tags: '$tags', difficulty: '$difficulty', rating: '$rating', source: '$source' } } } },
     ]).toArray(),
-    db.collection('contests').distinct('problemIds', { status: { $ne: 'published' } }),
+    archiveState(db),
   ]);
-  const hidden = new Set(held.map(String));
-  const visible = versions.filter((row) => !hidden.has(String(row._id)));
+  const visible = versions.filter((row) => state.listed(String(row._id)));
   const ids = visible.map((row) => row._id as ObjectId);
   const viewer = viewerId && ObjectId.isValid(viewerId) ? new ObjectId(viewerId) : null;
   const stats = ids.length ? await db.collection('submissions').aggregate([

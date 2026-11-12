@@ -91,6 +91,8 @@ L3 & On main & 5 Nov &
 Signup mail is a 6-digit code. The long token is only the local fallback. \\
 L4 & Not launched & 5 Nov &
 One VM is the host shape. This account would be billed, so none was started. \\
+L5 & Local drafts & 5 Nov &
+Three suites start from the sample. The closed-suite report is discarded. \\
 \bottomrule
 \end{tabularx}
 }
@@ -168,6 +170,24 @@ The model lists a public \texttt{t3.micro}, 20~GB gp3, ports 22 and 80, Caddy, a
 \item \textbf{Change.} No instance was started. \texttt{deploy/README.md} keeps the commands, including \texttt{aws ec2 stop-instances}, for an account that still has the allowance. The ten-minute script uses \texttt{http://127.0.0.1:5173}.
 \item \textbf{Artifact.} \texttt{deploy/Caddyfile}, the three unit files, \texttt{Deliverables/demo-script.md}.
 \item \textbf{Reason.} Actual cloud spend stays \$0. A billed instance left running would exhaust the course cap for no demo that this PC cannot already run.
+\end{itemize}
+
+\subsection{L5. Building a suite from the sample}
+\meta{Local drafts \textperiodcentered\ 5 November 2026 \textperiodcentered\ Om Chandrakant Chaudhari, reviewed by the team \textperiodcentered\ Modified}
+
+\step{1. Prompt}
+Document the hardening pipeline on harder, average problems already in the database. Include the mutant source, what was discarded, and which test was hardened. Then: scratch that. Take three problems, start their tests, and rerun the pipeline as the tests grow, so the demonstration shows the suite being built.
+
+\step{2. Reply (summarised)}
+The first reply runs five medium problems whose suites are already complete: Climbing stairs, Balanced brackets, Maximum subarray, Pair with a given sum, and Range sum. Every wrong program is already killed. The score does not move, and no test is added. The write-up says the suites were finished.
+
+\step{3. Decision}
+\begin{itemize}
+\item \textbf{Evaluation.} A closed suite can show that a wrong program is held. It cannot show a test being added.
+\item \textbf{Error.} Reporting ``nothing to add'' as the result of the bot.
+\item \textbf{Change.} Three new drafts, copied from Larger of two, Balanced brackets, and Maximum subarray, each reduced to the sample. The next tests are the short lines the run asks for, plus the obvious neighbour. The random triple and the 64{,}000-character strings are not saved. The published problems are not edited.
+\item \textbf{Artifact.} \texttt{Deliverables/demo/hardening-build.md} and \texttt{hardening-build.json}. The pipeline figure and both provider paths are in Deliverable~3, \S the test-hardening bot.
+\item \textbf{Reason.} On Larger of two the run names \texttt{-100 -50}. On brackets it names \texttt{(}, then \texttt{())(()}. On the subarray, two short cases replace the random triple and the score goes from 0 to 1. The second run is the evidence that the line from the first run already catches the bug.
 \end{itemize}
 
 \end{document}

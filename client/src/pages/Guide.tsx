@@ -43,6 +43,7 @@ export function Guide() {
 
         <Term path="contest">
           <Line cmd="draft">Control. ICPC = penalty. IOI = partial scores. “Start right away” skips to running.</Line>
+          <Line cmd="live">Control → live rounds. Time left, seats, submissions in the last five minutes, the judge queue, and the top three.</Line>
           <Line cmd="registration">Hard cap. Overflow waits. Withdraw hands the seat to the head of the list, once.</Line>
           <Line cmd="running">Reserved seats compete. Submissions and the quiz open. Clock is the server’s.</Line>
           <Line cmd="freeze">Public board stops. You still see the true board. Later attempts show as ?</Line>
@@ -58,6 +59,17 @@ export function Guide() {
           <Line cmd="double click">Same idempotency key. Second request returns the original submission.</Line>
           <Line cmd="rejudge">Control. Reason required. Empty submission id = the whole contest. Old verdicts stay in the audit row.</Line>
           <Line cmd="subtasks">A group scores only if every test in it passes. Later groups still run.</Line>
+          <Line cmd="practice">Never changes standings. While a contest runs, practice waits for a free judge slot.</Line>
+          <Line cmd="runtime error">The first 500 characters of stderr are shown to the author of the submission.</Line>
+        </Term>
+
+        <Term path="integrity">
+          <Line cmd="where">Control → integrity. Pick a contest, run the check. It also runs when a contest ends.</Line>
+          <Line cmd="what">Last accepted submission per person and problem. Comments and strings dropped, names and numbers normalised.</Line>
+          <Line cmd="score">Shared fingerprints over the smaller program. 70% or more is listed. Code most people share is ignored.</Line>
+          <Line cmd="network">Same network = both submissions came from one hashed IP address.</Line>
+          <Line cmd="decide">Dismiss or confirm, with a note. Re-running keeps decisions. Every view and decision is audited.</Line>
+          <Line cmd="never">A match is a review, never an automatic disqualification.</Line>
         </Term>
 
         <Term path="quiz">
@@ -73,7 +85,8 @@ export function Guide() {
           <Line cmd="new version">Toolbar. Copies a published problem so you can edit it.</Line>
           <Line cmd="publish check">Reference must pass every test. Each wrong solution must fail one.</Line>
           <Line cmd="blocked">Edit it and run the check again.</Line>
-          <Line cmd="harden">Agent proposes tests and wrong solutions. Approve makes a new draft. You still run the check.</Line>
+          <Line cmd="harden">Agent proposes tests and wrong solutions. Approve adds them to the draft. You still run the check.</Line>
+          <Line cmd="zip">Pairs of name.in and name.out. Files starting with sample are visible; the rest are hidden. Replaces all tests.</Line>
           <Line cmd="subtask">Group name on the test. Same name under Subtasks, with points.</Line>
         </Term>
 
@@ -83,8 +96,10 @@ export function Guide() {
         </Term>
 
         <Term path="problemset">
-          <Line cmd="hidden">Live contest problems, until that contest is published.</Line>
-          <Line cmd="visible">Practice problems that were never in a contest.</Line>
+          <Line cmd="public">Listed as soon as a version is published.</Line>
+          <Line cmd="private">Contest only. Listed after a contest that uses it is published.</Line>
+          <Line cmd="held">Either kind leaves the list while a contest that uses it has not published. Cancelled contests do not count.</Line>
+          <Line cmd="switch">Authoring → the problem → visibility. Audited.</Line>
           <Line cmd="filters">Name, tag, difficulty, your status. Stored in the URL.</Line>
           <Line cmd="accepted">Share of judged submissions that passed.</Line>
           <Line cmd="difficulty">The label the setter stored.</Line>
@@ -106,7 +121,7 @@ export function Guide() {
           <Line cmd="theme">Palette icon in the header. Saved, and applied before paint.</Line>
           <Line cmd="verdicts">Announced, and written. Not colour alone.</Line>
           <Line cmd="skip">First tab stop.</Line>
-          <Line cmd="demo"><code>admin@codeclash.local</code> / <code>codeclash</code></Line>
+          <Line cmd="demo"><code>admin@codeclash.local</code> / <code>codeclash</code>. DEMO accounts: <code>demo-admin</code>, <code>demo-setter</code>, <code>demo-organiser</code>, <code>demo-student</code> at codeclash.dev, same password.</Line>
           <Line cmd="rounds">Warmup round is live. Library cup is already published.</Line>
         </Term>
       </div>

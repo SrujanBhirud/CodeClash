@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { CodePanel, ProblemView, type Limits, type ProblemSource } from '../problem';
-import { Alert, errorText, useLanguage } from '../ui';
+import { Alert, errorText, newIdempotencyKey, useLanguage } from '../ui';
 
 interface PublicProblem {
   problemId: string; title: string; statement: string; samples: string; editorial: string; tags?: string[]; limits?: Limits; source?: ProblemSource | null;
@@ -21,7 +21,7 @@ export function Practice({ signedIn }: { signedIn: boolean }) {
   async function submit(lang: string, code: string) {
     const result = await api<{ id: string }>('/api/practice/submissions', {
       method: 'POST',
-      headers: { 'idempotency-key': crypto.randomUUID() },
+      headers: { 'idempotency-key': newIdempotencyKey() },
       body: JSON.stringify({ problemVersionId: versionId, language: lang, code }),
     });
     return result.id;
@@ -51,7 +51,6 @@ export function Practice({ signedIn }: { signedIn: boolean }) {
           />
         </div>
       ) : !error ? <div className="skeleton" style={{ height: '20rem' }} /> : null}
-      {problem ? <p className="muted small" style={{ marginTop: 'var(--space-4)' }}>Practice never changes standings. While a contest runs, practice waits for a free judge slot.</p> : null}
     </div>
   );
 }

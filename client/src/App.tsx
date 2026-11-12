@@ -10,6 +10,7 @@ import { ContestRoom } from './pages/ContestRoom';
 import { Control } from './pages/Control';
 import { Guide } from './pages/Guide';
 import { Home } from './pages/Home';
+import { Integrity } from './pages/Integrity';
 import { NotFound } from './pages/NotFound';
 import { Practice } from './pages/Practice';
 import { Problemset } from './pages/Problemset';
@@ -56,7 +57,8 @@ export default function App() {
             <NavLink to="/arena">contests</NavLink>
             <NavLink to="/problemset">problemset</NavLink>
             {isSetter ? <NavLink to="/authoring">authoring</NavLink> : null}
-            {isOrganiser ? <NavLink to="/control">control</NavLink> : null}
+            {isOrganiser ? <NavLink to="/control" end>control</NavLink> : null}
+            {isOrganiser ? <NavLink to="/control/integrity">integrity</NavLink> : null}
             {role === 'admin' ? <NavLink to="/admin">admin</NavLink> : null}
             {role === 'admin' ? <NavLink to="/guide">guide</NavLink> : null}
           </nav>
@@ -76,7 +78,7 @@ export default function App() {
       </header>
       {unverified ? (
         <div className="page" style={{ paddingBottom: 0 }}>
-          <div className="alert warn" role="status">Enter the 6-digit code sent to your email before you take a seat or submit.</div>
+          <div className="alert warn" role="status">Enter your 6-digit confirmation code before you take a seat or submit.</div>
         </div>
       ) : null}
       <main id="main" tabIndex={-1}>
@@ -90,6 +92,7 @@ export default function App() {
           <Route path="/practice/:versionId" element={<Practice signedIn={!!session} />} />
           <Route path="/authoring" element={isSetter ? <Authoring /> : session ? <Navigate to="/arena" /> : signIn} />
           <Route path="/control" element={isOrganiser ? <Control /> : session ? <Navigate to="/arena" /> : signIn} />
+          <Route path="/control/integrity" element={isOrganiser ? <Integrity /> : session ? <Navigate to="/arena" /> : signIn} />
           <Route path="/admin" element={role === 'admin' ? <Admin me={session!.user.id} /> : session ? <Navigate to="/arena" /> : signIn} />
           <Route path="/guide" element={role === 'admin' ? <Guide /> : session ? <Navigate to="/arena" /> : signIn} />
           <Route path="/profile" element={session ? <Profile session={session} onSession={setSession} onSignOut={signOut} /> : signIn} />

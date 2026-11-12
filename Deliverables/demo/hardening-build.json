@@ -1,0 +1,1867 @@
+[
+  {
+    "round": "1-sample",
+    "title": "Build: Larger of two",
+    "versionId": "6aec99cca419075c90cd0bbd",
+    "runId": "6aec99cda419075c90cd0bbe",
+    "tests": [
+      {
+        "input": "3 1\n",
+        "output": "3\n"
+      }
+    ],
+    "status": "completed",
+    "aiStatus": "AVAILABLE",
+    "calls": 2,
+    "tokens": 1121,
+    "metrics": {
+      "tests": 1,
+      "baseline": {
+        "passed": 1,
+        "total": 1
+      },
+      "mutants": {
+        "generated": 1,
+        "compileErrors": 0,
+        "trivial": 0,
+        "killed": 0,
+        "survived": 0,
+        "equivalent": 1
+      },
+      "score": null,
+      "projectedScore": null,
+      "boundary": [
+        {
+          "kind": "min",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "single",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "max-values",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "all-equal",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "sorted",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "reverse",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "zeros",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "negatives",
+          "generated": true,
+          "covered": false
+        }
+      ],
+      "performance": {
+        "checked": true,
+        "maxInputSize": 2,
+        "largestTestSize": 2,
+        "referenceMs": 90,
+        "limitMs": 2000,
+        "proposed": false,
+        "slowSolutionsCaught": []
+      },
+      "spec": "given",
+      "attacks": {
+        "boundary": 4,
+        "random": 27,
+        "max": 1,
+        "shape": 0,
+        "model": 3
+      }
+    },
+    "notes": [],
+    "mutations": [
+      {
+        "key": "m1",
+        "operator": "relational",
+        "source": "deterministic",
+        "description": "line 3: >= to >",
+        "diff": {
+          "line": 3,
+          "original": "print(a if a>=b else b)",
+          "mutated": "print(a if a>b else b)"
+        },
+        "status": "equivalent",
+        "survivedRandom": 27
+      },
+      {
+        "key": "ai1",
+        "operator": "model",
+        "source": "model",
+        "description": "A contestant might incorrectly use absolute values to find the maximum.",
+        "diff": null,
+        "status": "survived",
+        "survivedRandom": 11
+      },
+      {
+        "key": "ai2",
+        "operator": "model",
+        "source": "model",
+        "description": "A contestant might assume inputs are strictly positive and initialize max to 0.",
+        "diff": null,
+        "status": "survived",
+        "survivedRandom": 14
+      }
+    ],
+    "proposals": [
+      {
+        "id": "6aec9a00cbae2512c7bd709b",
+        "type": "test",
+        "status": "held",
+        "attack": "model:edge_case",
+        "input": "-100 -50",
+        "inputLength": 8,
+        "expected": "-50\n",
+        "reason": "Kills ai1 (A contestant might incorrectly use absolute values to find the maximum.) and 1 more. Found by the model:edge_case attack."
+      },
+      {
+        "id": "6aec9a00cbae2512c7bd709c",
+        "type": "wrong_solution",
+        "status": "held",
+        "attack": "model:wrong_solution",
+        "input": "",
+        "inputLength": 0,
+        "expected": "",
+        "reason": "A model wrong solution (A contestant might incorrectly use absolute values to find the maximum.) that test p1 catches. Keeping it guards future edits.",
+        "code": "import sys\na, b = map(int, sys.stdin.read().split())\nprint(a if abs(a) >= abs(b) else b)"
+      },
+      {
+        "id": "6aec9a00cbae2512c7bd709d",
+        "type": "wrong_solution",
+        "status": "held",
+        "attack": "model:wrong_solution",
+        "input": "",
+        "inputLength": 0,
+        "expected": "",
+        "reason": "A model wrong solution (A contestant might assume inputs are strictly positive and initialize max to 0.) that test p1 catches. Keeping it guards future edits.",
+        "code": "import sys\na, b = map(int, sys.stdin.read().split())\nans = 0\nif a > ans: ans = a\nif b > ans: ans = b\nprint(ans)"
+      }
+    ]
+  },
+  {
+    "round": "1-sample",
+    "title": "Build: Balanced brackets",
+    "versionId": "6aec9a00a419075c90cd0bc1",
+    "runId": "6aec9a00a419075c90cd0bc2",
+    "tests": [
+      {
+        "input": "(())\n",
+        "output": "yes\n"
+      }
+    ],
+    "status": "completed",
+    "aiStatus": "AVAILABLE",
+    "calls": 1,
+    "tokens": 1010,
+    "metrics": {
+      "tests": 1,
+      "baseline": {
+        "passed": 1,
+        "total": 1
+      },
+      "mutants": {
+        "generated": 13,
+        "compileErrors": 0,
+        "trivial": 12,
+        "killed": 0,
+        "survived": 1,
+        "equivalent": 0
+      },
+      "score": 0,
+      "projectedScore": 1,
+      "boundary": [
+        {
+          "kind": "min",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "single",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "max-values",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "all-equal",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "sorted",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "reverse",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "zeros",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "negatives",
+          "generated": false,
+          "covered": false
+        }
+      ],
+      "performance": {
+        "checked": true,
+        "maxInputSize": 100000,
+        "largestTestSize": 4,
+        "referenceMs": 190,
+        "limitMs": 2000,
+        "proposed": true,
+        "slowSolutionsCaught": []
+      },
+      "spec": "given",
+      "attacks": {
+        "boundary": 2,
+        "random": 23,
+        "max": 1,
+        "shape": 0,
+        "model": 0
+      }
+    },
+    "notes": [],
+    "mutations": [
+      {
+        "key": "m1",
+        "operator": "relational",
+        "source": "deterministic",
+        "description": "line 6: == to !=",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=1 if ch!=\"(\" else -1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m2",
+        "operator": "arithmetic",
+        "source": "deterministic",
+        "description": "line 6: += to -=",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d-=1 if ch==\"(\" else -1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m3",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 3: 0 to 1",
+        "diff": {
+          "line": 3,
+          "original": "d=0",
+          "mutated": "d=1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m4",
+        "operator": "logical",
+        "source": "deterministic",
+        "description": "line 8: and to or",
+        "diff": {
+          "line": 8,
+          "original": "print(\"yes\" if ok and d==0 else \"no\")",
+          "mutated": "print(\"yes\" if ok or d==0 else \"no\")"
+        },
+        "status": "survived",
+        "survivedRandom": 19
+      },
+      {
+        "key": "m5",
+        "operator": "relational",
+        "source": "deterministic",
+        "description": "line 7: < to <=",
+        "diff": {
+          "line": 7,
+          "original": "if d<0: ok=False",
+          "mutated": "if d<=0: ok=False"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m6",
+        "operator": "arithmetic",
+        "source": "deterministic",
+        "description": "line 6: - to +",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=1 if ch==\"(\" else +1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m7",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 6: 1 to 0",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=0 if ch==\"(\" else -1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m8",
+        "operator": "relational",
+        "source": "deterministic",
+        "description": "line 8: == to !=",
+        "diff": {
+          "line": 8,
+          "original": "print(\"yes\" if ok and d==0 else \"no\")",
+          "mutated": "print(\"yes\" if ok and d!=0 else \"no\")"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m9",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 6: 1 to 2",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=2 if ch==\"(\" else -1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m10",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 6: 1 to 0",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=1 if ch==\"(\" else -0"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m11",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 6: 1 to 2",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=1 if ch==\"(\" else -2"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m12",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 7: 0 to 1",
+        "diff": {
+          "line": 7,
+          "original": "if d<0: ok=False",
+          "mutated": "if d<1: ok=False"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m13",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 8: 0 to 1",
+        "diff": {
+          "line": 8,
+          "original": "print(\"yes\" if ok and d==0 else \"no\")",
+          "mutated": "print(\"yes\" if ok and d==1 else \"no\")"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      }
+    ],
+    "proposals": [
+      {
+        "id": "6aec9a39cbae2512c7bd70bd",
+        "type": "test",
+        "status": "held",
+        "attack": "boundary:min",
+        "input": "(\n",
+        "inputLength": 2,
+        "expected": "no\n",
+        "reason": "Kills m4 (line 8: and to or). Found by the boundary:min attack."
+      },
+      {
+        "id": "6aec9a39cbae2512c7bd70be",
+        "type": "performance_test",
+        "status": "held",
+        "attack": "max-scale",
+        "input": "(())((()((()(((()()))))))))))))))()(()()()))((())()(()(())(((((()))()()((()))()))(((())()()())))(()(((()()))))()))((()()))())(((()(())()))((()))()())(()(((()))(()())((()(()))())))()()()())))))(())((()))))()()))))())()()(((((())))()(((((())) … (4001 chars)",
+        "inputLength": 100001,
+        "expected": "no\n",
+        "reason": "No current test reaches half the maximum input size (largest is 4 of 100000 values). The reference took 190 ms of 2000 ms."
+      }
+    ]
+  },
+  {
+    "round": "1-sample",
+    "title": "Build: Maximum subarray",
+    "versionId": "6aec9a3aa419075c90cd0bc5",
+    "runId": "6aec9a3aa419075c90cd0bc6",
+    "tests": [
+      {
+        "input": "5\n-2 1 -3 4 -1\n",
+        "output": "4\n"
+      }
+    ],
+    "status": "completed",
+    "aiStatus": "AVAILABLE",
+    "calls": 2,
+    "tokens": 1650,
+    "metrics": {
+      "tests": 1,
+      "baseline": {
+        "passed": 1,
+        "total": 1
+      },
+      "mutants": {
+        "generated": 12,
+        "compileErrors": 0,
+        "trivial": 5,
+        "killed": 0,
+        "survived": 6,
+        "equivalent": 1
+      },
+      "score": 0,
+      "projectedScore": 1,
+      "boundary": [
+        {
+          "kind": "min",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "single",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "max-values",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "all-equal",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "sorted",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "reverse",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "zeros",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "negatives",
+          "generated": true,
+          "covered": true
+        }
+      ],
+      "performance": {
+        "checked": true,
+        "maxInputSize": 62501,
+        "largestTestSize": 6,
+        "referenceMs": 180,
+        "limitMs": 2000,
+        "proposed": true,
+        "slowSolutionsCaught": []
+      },
+      "spec": "given",
+      "attacks": {
+        "boundary": 8,
+        "random": 30,
+        "max": 1,
+        "shape": 0,
+        "model": 0
+      }
+    },
+    "notes": [
+      "Dropped a model:wrong_solution input: line 1: unexpected \"-5\" at the end of the line"
+    ],
+    "mutations": [
+      {
+        "key": "m1",
+        "operator": "arithmetic",
+        "source": "deterministic",
+        "description": "line 3: + to -",
+        "diff": {
+          "line": 3,
+          "original": "a=d[1:1+d[0]]",
+          "mutated": "a=d[1:1-d[0]]"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m2",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 3: 1 to 0",
+        "diff": {
+          "line": 3,
+          "original": "a=d[1:1+d[0]]",
+          "mutated": "a=d[0:1+d[0]]"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m3",
+        "operator": "min-max",
+        "source": "deterministic",
+        "description": "line 6: max to min",
+        "diff": {
+          "line": 6,
+          "original": "cur=max(x,cur+x)",
+          "mutated": "cur=min(x,cur+x)"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m4",
+        "operator": "arithmetic",
+        "source": "deterministic",
+        "description": "line 6: + to -",
+        "diff": {
+          "line": 6,
+          "original": "cur=max(x,cur+x)",
+          "mutated": "cur=max(x,cur-x)"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m5",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 3: 1 to 2",
+        "diff": {
+          "line": 3,
+          "original": "a=d[1:1+d[0]]",
+          "mutated": "a=d[2:1+d[0]]"
+        },
+        "status": "survived",
+        "survivedRandom": 22
+      },
+      {
+        "key": "m6",
+        "operator": "min-max",
+        "source": "deterministic",
+        "description": "line 7: max to min",
+        "diff": {
+          "line": 7,
+          "original": "best=max(best,cur)",
+          "mutated": "best=min(best,cur)"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m7",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 3: 1 to 0",
+        "diff": {
+          "line": 3,
+          "original": "a=d[1:1+d[0]]",
+          "mutated": "a=d[1:0+d[0]]"
+        },
+        "status": "survived",
+        "survivedRandom": 16
+      },
+      {
+        "key": "m8",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 3: 1 to 2",
+        "diff": {
+          "line": 3,
+          "original": "a=d[1:1+d[0]]",
+          "mutated": "a=d[1:2+d[0]]"
+        },
+        "status": "equivalent",
+        "survivedRandom": 30
+      },
+      {
+        "key": "m9",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 3: 0 to 1",
+        "diff": {
+          "line": 3,
+          "original": "a=d[1:1+d[0]]",
+          "mutated": "a=d[1:1+d[1]]"
+        },
+        "status": "survived",
+        "survivedRandom": 9
+      },
+      {
+        "key": "m10",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 4: 0 to 1",
+        "diff": {
+          "line": 4,
+          "original": "best=cur=a[0]",
+          "mutated": "best=cur=a[1]"
+        },
+        "status": "survived",
+        "survivedRandom": 19
+      },
+      {
+        "key": "m11",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 5: 1 to 0",
+        "diff": {
+          "line": 5,
+          "original": "for x in a[1:]:",
+          "mutated": "for x in a[0:]:"
+        },
+        "status": "survived",
+        "survivedRandom": 23
+      },
+      {
+        "key": "m12",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 5: 1 to 2",
+        "diff": {
+          "line": 5,
+          "original": "for x in a[1:]:",
+          "mutated": "for x in a[2:]:"
+        },
+        "status": "survived",
+        "survivedRandom": 19
+      }
+    ],
+    "proposals": [
+      {
+        "id": "6aec9a7ecbae2512c7bd70e3",
+        "type": "test",
+        "status": "held",
+        "attack": "random",
+        "input": "3\n373370295 -80059572 999066142\n",
+        "inputLength": 32,
+        "expected": "1292376865\n",
+        "reason": "Kills m5 (line 3: 1 to 2) and 4 more. Found by the random attack."
+      },
+      {
+        "id": "6aec9a7ecbae2512c7bd70e4",
+        "type": "test",
+        "status": "held",
+        "attack": "random",
+        "input": "1\n-583680946\n",
+        "inputLength": 13,
+        "expected": "-583680946\n",
+        "reason": "Kills m9 (line 3: 0 to 1). Found by the random attack."
+      },
+      {
+        "id": "6aec9a7ecbae2512c7bd70e5",
+        "type": "performance_test",
+        "status": "held",
+        "attack": "max-scale",
+        "input": "62500\n-398175010 954155452 -753652841 922597621 640854239 -765676614 590013632 -864744810 -600466023 66422529 622325550 350979034 487516736 360691596 16313101 -530223765 -916588493 325930481 -354163251 -777085438 377848093 -468767790 -78389 … (4001 chars)",
+        "inputLength": 648792,
+        "expected": "564450138190\n",
+        "reason": "No current test reaches half the maximum input size (largest is 6 of 62501 values). The reference took 180 ms of 2000 ms."
+      }
+    ]
+  },
+  {
+    "round": "2-after-the-gaps",
+    "title": "Build: Larger of two",
+    "versionId": "6aec99cca419075c90cd0bbd",
+    "runId": "6aec9ad7a419075c90cd0bc9",
+    "tests": [
+      {
+        "input": "3 1\n",
+        "output": "3\n"
+      },
+      {
+        "input": "1 3\n",
+        "output": "3\n"
+      },
+      {
+        "input": "-100 -50\n",
+        "output": "-50\n"
+      },
+      {
+        "input": "7 7\n",
+        "output": "7\n"
+      }
+    ],
+    "status": "completed",
+    "aiStatus": "AVAILABLE",
+    "calls": 2,
+    "tokens": 1260,
+    "metrics": {
+      "tests": 4,
+      "baseline": {
+        "passed": 4,
+        "total": 4
+      },
+      "mutants": {
+        "generated": 1,
+        "compileErrors": 0,
+        "trivial": 0,
+        "killed": 0,
+        "survived": 0,
+        "equivalent": 1
+      },
+      "score": null,
+      "projectedScore": null,
+      "boundary": [
+        {
+          "kind": "min",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "single",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "max-values",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "all-equal",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "sorted",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "reverse",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "zeros",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "negatives",
+          "generated": true,
+          "covered": true
+        }
+      ],
+      "performance": {
+        "checked": true,
+        "maxInputSize": 2,
+        "largestTestSize": 2,
+        "referenceMs": 90,
+        "limitMs": 2000,
+        "proposed": false,
+        "slowSolutionsCaught": []
+      },
+      "spec": "given",
+      "attacks": {
+        "boundary": 4,
+        "random": 28,
+        "max": 1,
+        "shape": 0,
+        "model": 1
+      }
+    },
+    "notes": [],
+    "mutations": [
+      {
+        "key": "m1",
+        "operator": "relational",
+        "source": "deterministic",
+        "description": "line 3: >= to >",
+        "diff": {
+          "line": 3,
+          "original": "print(a if a>=b else b)",
+          "mutated": "print(a if a>b else b)"
+        },
+        "status": "equivalent",
+        "survivedRandom": 28
+      },
+      {
+        "key": "ai1",
+        "operator": "model",
+        "source": "model",
+        "description": "Fails on negative inputs due to bad initialization or absolute value logic.",
+        "diff": null,
+        "status": "killed",
+        "survivedRandom": 0
+      }
+    ],
+    "proposals": [
+      {
+        "id": "6aec9af7cbae2512c7bd70f0",
+        "type": "wrong_solution",
+        "status": "held",
+        "attack": "model:wrong_solution",
+        "input": "",
+        "inputLength": 0,
+        "expected": "",
+        "reason": "A model wrong solution (Fails on negative inputs due to bad initialization or absolute value logic.) that the current tests catch. Keeping it guards future edits.",
+        "code": "import sys\na, b = map(int, sys.stdin.read().split())\nprint(max(abs(a), abs(b)))"
+      }
+    ]
+  },
+  {
+    "round": "2-after-the-gaps",
+    "title": "Build: Balanced brackets",
+    "versionId": "6aec9a00a419075c90cd0bc1",
+    "runId": "6aec9af9a419075c90cd0bcb",
+    "tests": [
+      {
+        "input": "(())\n",
+        "output": "yes\n"
+      },
+      {
+        "input": "(\n",
+        "output": "no\n"
+      },
+      {
+        "input": ")(\n",
+        "output": "no\n"
+      },
+      {
+        "input": "(()\n",
+        "output": "no\n"
+      }
+    ],
+    "status": "completed",
+    "aiStatus": "AVAILABLE",
+    "calls": 1,
+    "tokens": 963,
+    "metrics": {
+      "tests": 4,
+      "baseline": {
+        "passed": 4,
+        "total": 4
+      },
+      "mutants": {
+        "generated": 13,
+        "compileErrors": 0,
+        "trivial": 12,
+        "killed": 1,
+        "survived": 0,
+        "equivalent": 0
+      },
+      "score": 1,
+      "projectedScore": 1,
+      "boundary": [
+        {
+          "kind": "min",
+          "generated": false,
+          "covered": true
+        },
+        {
+          "kind": "single",
+          "generated": true,
+          "covered": true
+        },
+        {
+          "kind": "max-values",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "all-equal",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "sorted",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "reverse",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "zeros",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "negatives",
+          "generated": false,
+          "covered": false
+        }
+      ],
+      "performance": {
+        "checked": true,
+        "maxInputSize": 100000,
+        "largestTestSize": 4,
+        "referenceMs": 160,
+        "limitMs": 2000,
+        "proposed": true,
+        "slowSolutionsCaught": []
+      },
+      "spec": "given",
+      "attacks": {
+        "boundary": 1,
+        "random": 18,
+        "max": 1,
+        "shape": 0,
+        "model": 2
+      }
+    },
+    "notes": [],
+    "mutations": [
+      {
+        "key": "m1",
+        "operator": "relational",
+        "source": "deterministic",
+        "description": "line 6: == to !=",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=1 if ch!=\"(\" else -1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m2",
+        "operator": "arithmetic",
+        "source": "deterministic",
+        "description": "line 6: += to -=",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d-=1 if ch==\"(\" else -1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m3",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 3: 0 to 1",
+        "diff": {
+          "line": 3,
+          "original": "d=0",
+          "mutated": "d=1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m4",
+        "operator": "logical",
+        "source": "deterministic",
+        "description": "line 8: and to or",
+        "diff": {
+          "line": 8,
+          "original": "print(\"yes\" if ok and d==0 else \"no\")",
+          "mutated": "print(\"yes\" if ok or d==0 else \"no\")"
+        },
+        "status": "killed",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m5",
+        "operator": "relational",
+        "source": "deterministic",
+        "description": "line 7: < to <=",
+        "diff": {
+          "line": 7,
+          "original": "if d<0: ok=False",
+          "mutated": "if d<=0: ok=False"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m6",
+        "operator": "arithmetic",
+        "source": "deterministic",
+        "description": "line 6: - to +",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=1 if ch==\"(\" else +1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m7",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 6: 1 to 0",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=0 if ch==\"(\" else -1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m8",
+        "operator": "relational",
+        "source": "deterministic",
+        "description": "line 8: == to !=",
+        "diff": {
+          "line": 8,
+          "original": "print(\"yes\" if ok and d==0 else \"no\")",
+          "mutated": "print(\"yes\" if ok and d!=0 else \"no\")"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m9",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 6: 1 to 2",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=2 if ch==\"(\" else -1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m10",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 6: 1 to 0",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=1 if ch==\"(\" else -0"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m11",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 6: 1 to 2",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=1 if ch==\"(\" else -2"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m12",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 7: 0 to 1",
+        "diff": {
+          "line": 7,
+          "original": "if d<0: ok=False",
+          "mutated": "if d<1: ok=False"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m13",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 8: 0 to 1",
+        "diff": {
+          "line": 8,
+          "original": "print(\"yes\" if ok and d==0 else \"no\")",
+          "mutated": "print(\"yes\" if ok and d==1 else \"no\")"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "ai1",
+        "operator": "model",
+        "source": "model",
+        "description": "Checks if the count of opening and closing brackets are equal, but ignores the prefix depth condition (e.g., handles ')(' incorrectly if not careful, though here depth check is completely missing).",
+        "diff": null,
+        "status": "killed",
+        "survivedRandom": 0
+      },
+      {
+        "key": "ai2",
+        "operator": "model",
+        "source": "model",
+        "description": "Only checks if the string starts with '(' and ends with ')' and has equal counts.",
+        "diff": null,
+        "status": "survived",
+        "survivedRandom": 18
+      },
+      {
+        "key": "ai3",
+        "operator": "model",
+        "source": "model",
+        "description": "Repeatedly removes '()' substrings using string replacement, which is both O(N^2) and prone to TLE, but also buggy if recursion depth/loop condition is wrong.",
+        "diff": null,
+        "status": "survived",
+        "survivedRandom": 18
+      }
+    ],
+    "proposals": [
+      {
+        "id": "6aec9b29cbae2512c7bd7118",
+        "type": "test",
+        "status": "held",
+        "attack": "model:edge_case",
+        "input": "())(()",
+        "inputLength": 6,
+        "expected": "no\n",
+        "reason": "Kills ai2 (Only checks if the string starts with '(' and ends with ')' and has equal counts.). Found by the model:edge_case attack."
+      },
+      {
+        "id": "6aec9b29cbae2512c7bd7119",
+        "type": "test",
+        "status": "held",
+        "attack": "model:edge_case",
+        "input": "(((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((( … (4001 chars)",
+        "inputLength": 64001,
+        "expected": "no\n",
+        "reason": "Kills ai3 (Repeatedly removes '()' substrings using string replacement, which is both O(N^2) and prone to TLE, but also buggy if recursion depth/loop condition is wrong.). Found by the model:edge_case attack."
+      },
+      {
+        "id": "6aec9b29cbae2512c7bd711a",
+        "type": "wrong_solution",
+        "status": "held",
+        "attack": "model:wrong_solution",
+        "input": "",
+        "inputLength": 0,
+        "expected": "",
+        "reason": "A model wrong solution (Checks if the count of opening and closing brackets are equal, but ignores the prefix depth condition (e.g., handles ')(…) that the current tests catch. Keeping it guards future edits.",
+        "code": "import sys\ns = sys.stdin.read().strip()\nif s.count('(') == s.count(')'):\n    print('yes')\nelse:\n    print('no')"
+      },
+      {
+        "id": "6aec9b29cbae2512c7bd711b",
+        "type": "wrong_solution",
+        "status": "held",
+        "attack": "model:wrong_solution",
+        "input": "",
+        "inputLength": 0,
+        "expected": "",
+        "reason": "A model wrong solution (Only checks if the string starts with '(' and ends with ')' and has equal counts.) that test p1 catches. Keeping it guards future edits.",
+        "code": "import sys\ns = sys.stdin.read().strip()\nif len(s) % 2 == 0 and s.startswith('(') and s.endswith(')') and s.count('(') == s.count(')'):\n    print('yes')\nelse:\n    print('no')"
+      },
+      {
+        "id": "6aec9b29cbae2512c7bd711c",
+        "type": "wrong_solution",
+        "status": "held",
+        "attack": "model:wrong_solution",
+        "input": "",
+        "inputLength": 0,
+        "expected": "",
+        "reason": "A model wrong solution (Repeatedly removes '()' substrings using string replacement, which is both O(N^2) and prone to TLE, but also buggy if re…) that test p2 catches. Keeping it guards future edits.",
+        "code": "import sys\ns = sys.stdin.read().strip()\nwhile '()' in s:\n    s = s.replace('()', '')\nprint('yes' if s == '' else 'no')"
+      },
+      {
+        "id": "6aec9b29cbae2512c7bd711d",
+        "type": "performance_test",
+        "status": "held",
+        "attack": "max-scale",
+        "input": "(())()((()()(())))))))()(()))(())()())))())(())())()((()()))(((((()))(())))))()())()()()))(((())((())(()((()(()(()((()()())(()((())))))(()(())((((()))(()))()())(()((()))))))())()))(((()())(((((((((())))()())))(()((()())()()))()())()()())))) … (4001 chars)",
+        "inputLength": 100001,
+        "expected": "no\n",
+        "reason": "No current test reaches half the maximum input size (largest is 4 of 100000 values). The reference took 160 ms of 2000 ms."
+      }
+    ]
+  },
+  {
+    "round": "2-after-the-gaps",
+    "title": "Build: Maximum subarray",
+    "versionId": "6aec9a3aa419075c90cd0bc5",
+    "runId": "6aec9b2aa419075c90cd0bcd",
+    "tests": [
+      {
+        "input": "5\n-2 1 -3 4 -1\n",
+        "output": "4\n"
+      },
+      {
+        "input": "1\n-5\n",
+        "output": "-5\n"
+      },
+      {
+        "input": "2\n1 100\n",
+        "output": "101\n"
+      }
+    ],
+    "status": "completed",
+    "aiStatus": "AVAILABLE",
+    "calls": 2,
+    "tokens": 2170,
+    "metrics": {
+      "tests": 3,
+      "baseline": {
+        "passed": 3,
+        "total": 3
+      },
+      "mutants": {
+        "generated": 12,
+        "compileErrors": 0,
+        "trivial": 5,
+        "killed": 6,
+        "survived": 0,
+        "equivalent": 1
+      },
+      "score": 1,
+      "projectedScore": 1,
+      "boundary": [
+        {
+          "kind": "min",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "single",
+          "generated": true,
+          "covered": true
+        },
+        {
+          "kind": "max-values",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "all-equal",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "sorted",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "reverse",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "zeros",
+          "generated": true,
+          "covered": false
+        },
+        {
+          "kind": "negatives",
+          "generated": true,
+          "covered": true
+        }
+      ],
+      "performance": {
+        "checked": true,
+        "maxInputSize": 62501,
+        "largestTestSize": 6,
+        "referenceMs": 200,
+        "limitMs": 2000,
+        "proposed": true,
+        "slowSolutionsCaught": []
+      },
+      "spec": "given",
+      "attacks": {
+        "boundary": 8,
+        "random": 29,
+        "max": 1,
+        "shape": 0,
+        "model": 0
+      }
+    },
+    "notes": [
+      "Dropped a model:wrong_solution input: line 2: unexpected \"100\" at the end of the line"
+    ],
+    "mutations": [
+      {
+        "key": "m1",
+        "operator": "arithmetic",
+        "source": "deterministic",
+        "description": "line 3: + to -",
+        "diff": {
+          "line": 3,
+          "original": "a=d[1:1+d[0]]",
+          "mutated": "a=d[1:1-d[0]]"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m2",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 3: 1 to 0",
+        "diff": {
+          "line": 3,
+          "original": "a=d[1:1+d[0]]",
+          "mutated": "a=d[0:1+d[0]]"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m3",
+        "operator": "min-max",
+        "source": "deterministic",
+        "description": "line 6: max to min",
+        "diff": {
+          "line": 6,
+          "original": "cur=max(x,cur+x)",
+          "mutated": "cur=min(x,cur+x)"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m4",
+        "operator": "arithmetic",
+        "source": "deterministic",
+        "description": "line 6: + to -",
+        "diff": {
+          "line": 6,
+          "original": "cur=max(x,cur+x)",
+          "mutated": "cur=max(x,cur-x)"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m5",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 3: 1 to 2",
+        "diff": {
+          "line": 3,
+          "original": "a=d[1:1+d[0]]",
+          "mutated": "a=d[2:1+d[0]]"
+        },
+        "status": "killed",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m6",
+        "operator": "min-max",
+        "source": "deterministic",
+        "description": "line 7: max to min",
+        "diff": {
+          "line": 7,
+          "original": "best=max(best,cur)",
+          "mutated": "best=min(best,cur)"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m7",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 3: 1 to 0",
+        "diff": {
+          "line": 3,
+          "original": "a=d[1:1+d[0]]",
+          "mutated": "a=d[1:0+d[0]]"
+        },
+        "status": "killed",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m8",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 3: 1 to 2",
+        "diff": {
+          "line": 3,
+          "original": "a=d[1:1+d[0]]",
+          "mutated": "a=d[1:2+d[0]]"
+        },
+        "status": "equivalent",
+        "survivedRandom": 29
+      },
+      {
+        "key": "m9",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 3: 0 to 1",
+        "diff": {
+          "line": 3,
+          "original": "a=d[1:1+d[0]]",
+          "mutated": "a=d[1:1+d[1]]"
+        },
+        "status": "killed",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m10",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 4: 0 to 1",
+        "diff": {
+          "line": 4,
+          "original": "best=cur=a[0]",
+          "mutated": "best=cur=a[1]"
+        },
+        "status": "killed",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m11",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 5: 1 to 0",
+        "diff": {
+          "line": 5,
+          "original": "for x in a[1:]:",
+          "mutated": "for x in a[0:]:"
+        },
+        "status": "killed",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m12",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 5: 1 to 2",
+        "diff": {
+          "line": 5,
+          "original": "for x in a[1:]:",
+          "mutated": "for x in a[2:]:"
+        },
+        "status": "killed",
+        "survivedRandom": 0
+      }
+    ],
+    "proposals": [
+      {
+        "id": "6aec9b62cbae2512c7bd713c",
+        "type": "performance_test",
+        "status": "held",
+        "attack": "max-scale",
+        "input": "62500\n636490845 -256891382 236524885 -265447391 -62194604 -500919097 -903618792 650392797 283366120 977614472 853578814 389819055 108749525 -753666811 -941645694 997171798 703544100 484231198 -221080506 638568923 87164757 484847882 -4116159 … (4001 chars)",
+        "inputLength": 649222,
+        "expected": "152690609934\n",
+        "reason": "No current test reaches half the maximum input size (largest is 6 of 62501 values). The reference took 200 ms of 2000 ms."
+      }
+    ]
+  },
+  {
+    "round": "3-order-in-the-middle",
+    "title": "Build: Balanced brackets",
+    "versionId": "6aec9a00a419075c90cd0bc1",
+    "runId": "6aec9b84a419075c90cd0bd0",
+    "tests": [
+      {
+        "input": "(())\n",
+        "output": "yes\n"
+      },
+      {
+        "input": "(\n",
+        "output": "no\n"
+      },
+      {
+        "input": ")(\n",
+        "output": "no\n"
+      },
+      {
+        "input": "(()\n",
+        "output": "no\n"
+      },
+      {
+        "input": "())(()\n",
+        "output": "no\n"
+      }
+    ],
+    "status": "completed",
+    "aiStatus": "AVAILABLE",
+    "calls": 1,
+    "tokens": 852,
+    "metrics": {
+      "tests": 5,
+      "baseline": {
+        "passed": 5,
+        "total": 5
+      },
+      "mutants": {
+        "generated": 13,
+        "compileErrors": 0,
+        "trivial": 12,
+        "killed": 1,
+        "survived": 0,
+        "equivalent": 0
+      },
+      "score": 1,
+      "projectedScore": 1,
+      "boundary": [
+        {
+          "kind": "min",
+          "generated": false,
+          "covered": true
+        },
+        {
+          "kind": "single",
+          "generated": false,
+          "covered": true
+        },
+        {
+          "kind": "max-values",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "all-equal",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "sorted",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "reverse",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "zeros",
+          "generated": false,
+          "covered": false
+        },
+        {
+          "kind": "negatives",
+          "generated": false,
+          "covered": false
+        }
+      ],
+      "performance": {
+        "checked": true,
+        "maxInputSize": 100000,
+        "largestTestSize": 6,
+        "referenceMs": 190,
+        "limitMs": 2000,
+        "proposed": true,
+        "slowSolutionsCaught": []
+      },
+      "spec": "given",
+      "attacks": {
+        "boundary": 0,
+        "random": 25,
+        "max": 1,
+        "shape": 0,
+        "model": 2
+      }
+    },
+    "notes": [],
+    "mutations": [
+      {
+        "key": "m1",
+        "operator": "relational",
+        "source": "deterministic",
+        "description": "line 6: == to !=",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=1 if ch!=\"(\" else -1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m2",
+        "operator": "arithmetic",
+        "source": "deterministic",
+        "description": "line 6: += to -=",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d-=1 if ch==\"(\" else -1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m3",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 3: 0 to 1",
+        "diff": {
+          "line": 3,
+          "original": "d=0",
+          "mutated": "d=1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m4",
+        "operator": "logical",
+        "source": "deterministic",
+        "description": "line 8: and to or",
+        "diff": {
+          "line": 8,
+          "original": "print(\"yes\" if ok and d==0 else \"no\")",
+          "mutated": "print(\"yes\" if ok or d==0 else \"no\")"
+        },
+        "status": "killed",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m5",
+        "operator": "relational",
+        "source": "deterministic",
+        "description": "line 7: < to <=",
+        "diff": {
+          "line": 7,
+          "original": "if d<0: ok=False",
+          "mutated": "if d<=0: ok=False"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m6",
+        "operator": "arithmetic",
+        "source": "deterministic",
+        "description": "line 6: - to +",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=1 if ch==\"(\" else +1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m7",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 6: 1 to 0",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=0 if ch==\"(\" else -1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m8",
+        "operator": "relational",
+        "source": "deterministic",
+        "description": "line 8: == to !=",
+        "diff": {
+          "line": 8,
+          "original": "print(\"yes\" if ok and d==0 else \"no\")",
+          "mutated": "print(\"yes\" if ok and d!=0 else \"no\")"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m9",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 6: 1 to 2",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=2 if ch==\"(\" else -1"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m10",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 6: 1 to 0",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=1 if ch==\"(\" else -0"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m11",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 6: 1 to 2",
+        "diff": {
+          "line": 6,
+          "original": "d+=1 if ch==\"(\" else -1",
+          "mutated": "d+=1 if ch==\"(\" else -2"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m12",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 7: 0 to 1",
+        "diff": {
+          "line": 7,
+          "original": "if d<0: ok=False",
+          "mutated": "if d<1: ok=False"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "m13",
+        "operator": "literal",
+        "source": "deterministic",
+        "description": "line 8: 0 to 1",
+        "diff": {
+          "line": 8,
+          "original": "print(\"yes\" if ok and d==0 else \"no\")",
+          "mutated": "print(\"yes\" if ok and d==1 else \"no\")"
+        },
+        "status": "trivial",
+        "survivedRandom": 0
+      },
+      {
+        "key": "ai1",
+        "operator": "model",
+        "source": "model",
+        "description": "Checks if the count of '(' equals the count of ')' without considering prefix counts, failing on cases like ')(' or '())('",
+        "diff": null,
+        "status": "killed",
+        "survivedRandom": 0
+      },
+      {
+        "key": "ai2",
+        "operator": "model",
+        "source": "model",
+        "description": "Checks total balance at the end without setting a failure flag when depth becomes negative, passing when depth recovers later (e.g., ')(' or '())(')",
+        "diff": null,
+        "status": "killed",
+        "survivedRandom": 0
+      },
+      {
+        "key": "ai3",
+        "operator": "model-slow",
+        "source": "model",
+        "description": "Slow O(N^2) solution using string replacement '()' -> '' that TLEs on large inputs",
+        "diff": null,
+        "status": "survived",
+        "survivedRandom": 25
+      }
+    ],
+    "proposals": [
+      {
+        "id": "6aec9bafcbae2512c7bd7163",
+        "type": "test",
+        "status": "held",
+        "attack": "model:edge_case",
+        "input": "(((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((( … (4001 chars)",
+        "inputLength": 64001,
+        "expected": "no\n",
+        "reason": "Kills ai3 (Slow O(N^2) solution using string replacement '()' -> '' that TLEs on large inputs). Found by the model:edge_case attack."
+      },
+      {
+        "id": "6aec9bafcbae2512c7bd7164",
+        "type": "wrong_solution",
+        "status": "held",
+        "attack": "model:wrong_solution",
+        "input": "",
+        "inputLength": 0,
+        "expected": "",
+        "reason": "A model wrong solution (Checks if the count of '(' equals the count of ')' without considering prefix counts, failing on cases like ')(' or '())…) that the current tests catch. Keeping it guards future edits.",
+        "code": "import sys\ns = sys.stdin.read().strip()\nif s.count('(') == s.count(')'):\n    print('yes')\nelse:\n    print('no')"
+      },
+      {
+        "id": "6aec9bafcbae2512c7bd7165",
+        "type": "wrong_solution",
+        "status": "held",
+        "attack": "model:wrong_solution",
+        "input": "",
+        "inputLength": 0,
+        "expected": "",
+        "reason": "A model wrong solution (Checks total balance at the end without setting a failure flag when depth becomes negative, passing when depth recovers …) that the current tests catch. Keeping it guards future edits.",
+        "code": "import sys\ns = sys.stdin.read().strip()\nd = 0\nfor ch in s:\n    d += 1 if ch == '(' else -1\nprint('yes' if d == 0 else 'no')"
+      },
+      {
+        "id": "6aec9bafcbae2512c7bd7166",
+        "type": "performance_test",
+        "status": "held",
+        "attack": "max-scale",
+        "input": "))))((()((()())((((((())))()())()(((((()((())))((()(()()()()((())())())(((())(()()((()))()((())(((()((((((()(()())(()((((((())(()))))()((((((()))((()))(()(()()()()())((((())()(())))((()((()))()(()((()()))))))(()()(()()((((((()(((())))))()(( … (4001 chars)",
+        "inputLength": 100001,
+        "expected": "no\n",
+        "reason": "No current test reaches half the maximum input size (largest is 6 of 100000 values). The reference took 190 ms of 2000 ms."
+      }
+    ]
+  }
+]

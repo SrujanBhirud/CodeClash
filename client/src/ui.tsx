@@ -15,6 +15,15 @@ export const LANGUAGES: { id: Language; name: string }[] = [
   { id: 'go', name: 'Go' },
 ];
 
+/** A unique submit key. `randomUUID` exists on https and localhost, not on a plain http demo. */
+export function newIdempotencyKey(): string {
+  const webCrypto = globalThis.crypto;
+  if (typeof webCrypto?.randomUUID === 'function') return webCrypto.randomUUID();
+  const bytes = webCrypto?.getRandomValues?.(new Uint8Array(16));
+  if (bytes) return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return `${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`;
+}
+
 export const STARTERS: Record<Language, string> = {
   python: 'import sys\n\ndata = sys.stdin.read().split()\n# read from data, print the answer\n',
   javascript: "const data = require('fs').readFileSync(0, 'utf8').trim().split(/\\s+/);\n// read from data, print the answer\n",

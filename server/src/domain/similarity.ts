@@ -26,19 +26,21 @@ function stripCommentsAndStrings(code: string) {
     }
     if (two === '/*') {
       const end = code.indexOf('*/', i + 2);
-      i = end < 0 ? code.length : end + 2;
-      out += ' ';
+      const stop = end < 0 ? code.length : end + 2;
+      out += ` ${newlines(code.slice(i, stop))}`;
+      i = stop;
       continue;
     }
     const quote = code[i];
     if (quote === '"' || quote === "'" || quote === '`') {
+      const start = i;
       i += 1;
       while (i < code.length && code[i] !== quote) {
         if (code[i] === '\\') i += 1;
         i += 1;
       }
       i += 1;
-      out += ' STR ';
+      out += ` STR ${newlines(code.slice(start, i))}`;
       continue;
     }
     out += code[i];
@@ -47,18 +49,53 @@ function stripCommentsAndStrings(code: string) {
   return out;
 }
 
-/** Identifiers become ID and numbers become NUM so renaming does not hide a copy. */
-export function tokenize(code: string): string[] {
+function newlines(text: string) {
+  return '\n'.repeat(text.split('\n').length - 1);
+}
+
+/** Tokens with the 1-based source line each came from. Removed text keeps its line breaks. */
+function lexemes(code: string): { token: string; line: number }[] {
   const raw = stripCommentsAndStrings(code);
-  const tokens: string[] = [];
-  const pattern = /[A-Za-z_][A-Za-z0-9_]*|\d+(?:\.\d+)?|==|!=|<=|>=|&&|\|\||[^\s]/g;
+  const out: { token: string; line: number }[] = [];
+  const pattern = /\n|[A-Za-z_][A-Za-z0-9_]*|\d+(?:\.\d+)?|==|!=|<=|>=|&&|\|\||[^\s]/g;
+  let line = 1;
   for (const match of raw.matchAll(pattern)) {
     const word = match[0];
-    if (/^[A-Za-z_]/.test(word)) tokens.push('ID');
-    else if (/^\d/.test(word)) tokens.push('NUM');
-    else if (word !== 'STR') tokens.push(word);
+    if (word === '\n') line += 1;
+    else if (/^[A-Za-z_]/.test(word)) out.push({ token: 'ID', line });
+    else if (/^\d/.test(word)) out.push({ token: 'NUM', line });
+    else out.push({ token: word, line });
   }
-  return tokens;
+  return out;
+}
+
+/** Identifiers become ID and numbers become NUM so renaming does not hide a copy. */
+export function tokenize(code: string): string[] {
+  return lexemes(code).map((item) => item.token);
+}
+
+/** Lines of each program covered by a run of `run` normalised tokens that also appears in the other. */
+export function sharedLines(left: string, right: string, run = 8): { a: number[]; b: number[] } {
+  const a = lexemes(left);
+  const b = lexemes(right);
+  const grams = (items: { token: string }[]) => {
+    const keys: string[] = [];
+    for (let i = 0; i <= items.length - run; i += 1) keys.push(items.slice(i, i + run).map((item) => item.token).join(' '));
+    return keys;
+  };
+  const gramsA = grams(a);
+  const gramsB = grams(b);
+  const inA = new Set(gramsA);
+  const inB = new Set(gramsB);
+  const mark = (items: { line: number }[], keys: string[], other: Set<string>) => {
+    const lines = new Set<number>();
+    keys.forEach((key, i) => {
+      if (!other.has(key)) return;
+      for (let k = i; k < i + run; k += 1) lines.add(items[k]!.line);
+    });
+    return [...lines].sort((x, y) => x - y);
+  };
+  return { a: mark(a, gramsA, inB), b: mark(b, gramsB, inA) };
 }
 
 function fingerprints(tokens: string[]): Set<string> {
@@ -118,11 +155,19 @@ export async function runSimilarity(db: Db, contestId: string, actorId: string) 
     });
     byProblem.set(problemId, list);
   }
+  const previous = await db.collection('similarity_reports').findOne({ contestId: contest._id });
+  const decided = new Map(((previous?.pairs as Record<string, unknown>[]) ?? [])
+    .filter((pair) => pair.status !== 'open')
+    .map((pair) => [`${pair.id}|${pair.submissionA}|${pair.submissionB}`, pair]));
   const pairs: Record<string, unknown>[] = [];
+  let tooShort = 0;
   for (const [problemId, pieces] of byProblem) {
     const lengths = pieces.map((p) => p.tokens.length).sort((a, b) => a - b);
     const median = lengths[Math.floor(lengths.length / 2)] ?? 0;
-    if (median < MIN_TOKENS) continue;
+    if (median < MIN_TOKENS) {
+      tooShort += 1;
+      continue;
+    }
     const counts = new Map<string, number>();
     for (const piece of pieces) for (const print of piece.prints) counts.set(print, (counts.get(print) ?? 0) + 1);
     const noisy = new Set([...counts].filter(([, n]) => n / pieces.length > COMMON).map(([print]) => print));
@@ -137,8 +182,10 @@ export async function runSimilarity(db: Db, contestId: string, actorId: string) 
         const score = overlapScore(a.prints, b.prints);
         const sameIp = !!(a.ipHash && a.ipHash === b.ipHash);
         if (score < THRESHOLD) continue;
+        const id = `${problemId}:${a.userId}:${b.userId}`;
+        const earlier = decided.get(`${id}|${a.submissionId}|${b.submissionId}`);
         pairs.push({
-          id: `${problemId}:${a.userId}:${b.userId}`,
+          id,
           problemId,
           userA: a.userId,
           userB: b.userId,
@@ -148,15 +195,18 @@ export async function runSimilarity(db: Db, contestId: string, actorId: string) 
           languageB: b.language,
           score: Math.round(score * 1000) / 1000,
           sameIp,
-          status: 'open',
-          note: '',
+          status: earlier?.status ?? 'open',
+          note: earlier?.note ?? '',
+          ...(earlier?.decidedAt ? { decidedAt: earlier.decidedAt, decidedBy: earlier.decidedBy } : {}),
         });
       }
     }
   }
+  pairs.sort((x, y) => (y.score as number) - (x.score as number));
+  const checked = { submissions: latest.size, problems: byProblem.size, tooShort, threshold: THRESHOLD };
   await db.collection('similarity_reports').updateOne(
     { contestId: contest._id },
-    { $set: { contestId: contest._id, pairs, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+    { $set: { contestId: contest._id, pairs, checked, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
     { upsert: true },
   );
   await auditCollection(db).insertOne({

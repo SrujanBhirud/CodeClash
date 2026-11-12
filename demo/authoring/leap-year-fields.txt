@@ -1,0 +1,117 @@
+LEAP YEAR: everything to paste on the Authoring page (signed in as DEMO Setter)
+=============================================================================
+
+The tests in leap-year-tests.zip leave out both century cases on purpose:
+  - no year like 1900 (divisible by 100, not a leap year)
+  - no year like 2000 (divisible by 400, a leap year)
+The publish check will block, because "forgets the century rule" passes every
+test. Hardening should then propose one test of each kind.
+
+
+----- NEW PROBLEM (the "new problem" form) ------------------------------------
+
+Title:
+Leap year
+
+Visibility:
+Private (click the "Private" card)
+
+Difficulty:
+easy
+
+Tags:
+math, implementation
+
+Statement (paste everything between the lines):
+-----
+A year has 366 days when it is a leap year. The Gregorian calendar decides it like this:
+
+- a year divisible by 4 is a leap year,
+- except a year divisible by 100, which is not,
+- except a year divisible by 400, which is a leap year after all.
+
+Given a year, say whether it is a leap year.
+
+Input
+One line with an integer `y` (1 ≤ y ≤ 9999).
+
+Output
+Print `Leap` if `y` is a leap year, and `Common` otherwise.
+-----
+
+Then press "create draft". The strip under the title should say
+"Contest only. It appears in the problemset after a contest using it is published."
+
+
+----- 1. STATEMENT step ---------------------------------------------------------
+
+Examples (one is already there; press "add example" for the second):
+  Example 1   input: 2024    output: Leap
+  Example 2   input: 2023    output: Common
+
+Press save. The checklist chips "statement" and "2 examples" turn green.
+
+
+----- 2. TESTS step -------------------------------------------------------------
+
+Drag demo\authoring\leap-year-tests.zip onto the dashed box (or "choose file").
+It saves first, then loads 16 tests: 2 visible (sample1, sample2), 14 hidden.
+
+Input spec:
+y int 1..9999
+
+Press "check against tests": all 16 tests are valid. Press save.
+
+
+----- 3. SOLUTIONS step ---------------------------------------------------------
+(press "add" twice to get the two wrong-solution editors)
+
+Reference solution (Python):
+-----
+y = int(input())
+leap = y % 4 == 0 and (y % 100 != 0 or y % 400 == 0)
+print("Leap" if leap else "Common")
+-----
+
+Wrong solution 1
+  Label:    forgets the century rule
+  Language: Python
+-----
+y = int(input())
+print("Leap" if y % 4 == 0 else "Common")
+-----
+
+Wrong solution 2
+  Label:    every even year
+  Language: Python
+-----
+y = int(input())
+print("Leap" if y % 2 == 0 else "Common")
+-----
+
+
+----- 4. EDITORIAL step ---------------------------------------------------------
+
+Editorial:
+-----
+Check the rules from the most specific one down. A year divisible by 400 is a leap year. Otherwise a year divisible by 100 is not. Otherwise it is a leap year exactly when it is divisible by 4.
+
+The usual mistake is to stop at "divisible by 4", which calls 1900 a leap year. The other is to forget the 400 rule, which calls 2000 a common year.
+-----
+
+
+----- 5. CHECK & HARDEN step: what to expect -----------------------------------
+
+Save first.
+Publish check   -> BLOCKED: wrong solution survived: forgets the century rule
+Run hardening   -> the five stage cards light up in turn (about a minute).
+                   14 mutants: 7 trivial (the samples catch them), 7 survive,
+                   all on the century rules (100 -> 99 or 101, 400 -> 399 or
+                   401, == / != flips). Red tiles in "Every mutant" are the
+                   survivors; click one to show its one-line change.
+Proposals       -> one century that is not a leap year (like 1900 -> Common)
+                   and one that is (like 2000 -> Leap). Each shows the mutant
+                   it kills, with the reference and the mutant output.
+                   The score card shows "now" vs "after approving" (to 100%).
+Approve both    -> they go into the same draft as hidden tests (18 tests).
+Publish check   -> passes and the problem is published, still private.

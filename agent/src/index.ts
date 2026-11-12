@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { hostname } from 'node:os';
 import { Redis } from 'ioredis';
 import { MongoClient } from 'mongodb';
+import { providerFromEnv } from './providers.js';
 import { HARDEN_STREAM, processRun } from './worker.js';
 
 const url = process.env.MONGO_URL ?? 'mongodb://app:codeclash@127.0.0.1:27017/codeclash?replicaSet=rs0&authSource=codeclash';
@@ -54,7 +55,16 @@ async function handle(id: string, fields: string[]) {
   await redis.xack(HARDEN_STREAM, group, id);
 }
 
-console.log(`agent worker ${consumer} waiting on ${HARDEN_STREAM}`);
+const provider = providerFromEnv();
+const reportStatus = () => db.collection<{ _id: string }>('service_status').updateOne(
+  { _id: 'agent' },
+  { $set: { status: provider.status, provider: provider.provider?.name ?? null, model: provider.provider?.model ?? null, reason: provider.reason, worker: consumer, seenAt: new Date() } },
+  { upsert: true },
+).catch((error) => console.error('agent status', error));
+await reportStatus();
+setInterval(() => { void reportStatus(); }, 60_000).unref();
+
+console.log(`agent worker ${consumer} waiting on ${HARDEN_STREAM} · AI ${provider.status}`);
 for (;;) {
   try {
     const reply = await redis.xreadgroup('GROUP', group, consumer, 'COUNT', 1, 'BLOCK', 5000, 'STREAMS', HARDEN_STREAM, '>') as [string, Entry[]][] | null;

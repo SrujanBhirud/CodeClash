@@ -28,7 +28,8 @@ describe('isolation suite', () => {
         memoryMb: 64,
         outputLimit: 4096,
       });
-      if (file === 'forkbomb.py') expect(['RE', 'TLE'], file).toContain(outcome.verdict);
+      // A fork bomb can be stopped by the time limit, a runtime error, or the pid cap (exit 137, scored MLE).
+      if (file === 'forkbomb.py') expect(['RE', 'TLE', 'MLE'], file).toContain(outcome.verdict);
       else expect(outcome.verdict, file).toBe(verdict);
     }
   }, 120000);
